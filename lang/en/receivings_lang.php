@@ -1,0 +1,34 @@
+<?php 
+$lang["recvs_discount"] = "Disc %";
+$lang["recvs_total"] = "Total";
+$lang["recvs_print_after_sale"] = "Print after sale";
+$lang["recvs_quantity"] = "Qty";
+$lang["recvs_order_number"] = "ONb";
+$lang["recvs_recv_date"] = "Date";
+$lang["recvs_emp"] = "Employee";
+$lang["recvs_min_0"] = "Quantity must >= 0";
+$lang["recvs_min_1"] = "Quantity must >= 1";
+$lang["recvs_find_order_number"] = "Search order number";
+$lang["recvs_new"] = "Add order";
+$lang["recvs_cost_price"] = "CPr";
+$lang["recvs_order_quantity"] = "OQty";
+$lang["recvs_recv_quantity"] = "RQty";
+$lang["recvs_order"] = "Order";
+$lang["recvs_receive"] = "Recv";
+$lang["recvs_return"] = "Return";
+$lang["recvs_err_order"] = "Add order failed";
+$lang["recvs_order_person"] = "employee";
+$lang["recvs_order_person_required"] = "Please input employee id";
+$lang["recvs_order_number_required"] = "Please input order number";
+$lang["recvs_err_param"] = "There are some wrong with input data, please check";
+$lang["recvs_msg_order"] = "You have successfully add order";
+$lang["recvs_err_get"] = "Get order information failed";
+$lang["recvs_msg_get"] = "You have successfully get order information";
+$lang["recvs_quantity_required"] = "Please input quantity";
+$lang["recvs_err"] = "Error";
+$lang["recvs_msg_recv"] = "You have successfully added receiving";
+$lang["recvs_stock_quantity"] = "stock quantity";
+$lang["recvs_msg_item"] = "success";
+$lang["recvs_ret_less"] = "Return quantity must less than receiving quantity";
+$lang["recvs_msg_ret"] = "You have successfully return";
+?>

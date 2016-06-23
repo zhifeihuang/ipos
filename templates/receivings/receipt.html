@@ -1,0 +1,14 @@
+{extends file='header.tpl'}
+{block name="container"}
+{if isset($error)}
+<div class="alert alert-dismissible alert-danger">{$error}</div>
+{else}
+<script type="text/javascript">
+	{if isset($print_after_sale)}
+		$(window).load(function() {
+			window.print();
+		});
+	{/if}
+</script>
+{include file="{$receipt}.tpl"}
+{/block}

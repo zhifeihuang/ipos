@@ -1,0 +1,31 @@
+<?php 
+$lang["sales_takings"] = "Takings";
+$lang["sales_start_typing_item_name"] = "Start Typing item's name or scan barcode...";
+$lang["sales_sub_total"] = "Sub Total";
+$lang["sales_total"] = "Total";
+$lang["sales_customer_total"] = "CTotal";
+$lang["sales_customer"] = "CNumber";
+$lang["sales_payment"] = "Payment";
+$lang["sales_more_than"] = "Payment Amount does not cover Total";
+$lang["sales_pay"] = "Pay";
+$lang["sales_change"] = "Change";
+$lang["sales_payment_title"] = "Type";
+$lang['sales_payment_type'] = array('cash'=>'cash','check'=>'check','credit'=>'credit');
+$lang["sales_msg_sale"] = "You have successfully save data";
+$lang["sales_err_param"] = "Error, please check input data";
+$lang["sales_err"] = "Error";
+$lang["sales_err_pay"] = "Error pay";
+$lang["sales_msg_pay"] = "You have successfully paied";
+$lang["sales_msg_suspend"] = "You have successfully save data";
+$lang["sales_err_suspend_data"] = "Error data, please re-scaning";
+$lang["sales_err_suspend_table"] = "Error to save data";
+$lang["sales_calc"] = "Checkout";
+$lang["sales_err_calc"] = "Error checkout";
+$lang["sales_invoice_number"] = "Please input invoice number";
+$lang["sales_line"] = "lines";
+$lang["sales_ret_quantity"] = "RQty";
+$lang["sales_s_quantity"] = "SQty";
+$lang["sales_ret_q_s"] = "RQty must less than SQty";
+$lang["sales_err_ret"] = "Error return";
+$lang["sales_msg_ret"] = "You have successfully return";
+?>

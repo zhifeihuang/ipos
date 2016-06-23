@@ -1,0 +1,34 @@
+<?php 
+$lang["recvs_discount"] = "折扣 %";
+$lang["recvs_total"] = "总价";
+$lang["recvs_print_after_sale"] = "打印";
+$lang["recvs_quantity"] = "数量";
+$lang["recvs_order_number"] = "订单号";
+$lang["recvs_recv_date"] = "日期";
+$lang["recvs_emp"] = "员工";
+$lang["recvs_min_0"] = "数量必须大于等于0";
+$lang["recvs_min_1"] = "数量必须大于等于1";
+$lang["recvs_find_order_number"] = "搜索订单号";
+$lang["recvs_new"] = "增加订单";
+$lang["recvs_cost_price"] = "进价";
+$lang["recvs_order_quantity"] = "订购数量";
+$lang["recvs_recv_quantity"] = "入库数量";
+$lang["recvs_order"] = "采购";
+$lang["recvs_receive"] = "入库";
+$lang["recvs_return"] = "退货";
+$lang["recvs_err_order"] = "申请订单失败";
+$lang["recvs_order_person"] = "申请人工号";
+$lang["recvs_order_person_required"] = "请输入申请人工号";
+$lang["recvs_order_number_required"] = "请选择订单";
+$lang["recvs_err_param"] = "输入参数错误，请检查";
+$lang["recvs_msg_order"] = "成功申请订单";
+$lang["recvs_err_get"] = "获取资料失败";
+$lang["recvs_msg_get"] = "成功获取订单资料";
+$lang["recvs_quantity_required"] = "请输入数量";
+$lang["recvs_err"] = "操作失败";
+$lang["recvs_msg_recv"] = "成功入库";
+$lang["recvs_stock_quantity"] = "库存量";
+$lang["recvs_msg_item"] = "操作成功";
+$lang["recvs_ret_less"] = "退货数量必需小于等于库存量";
+$lang["recvs_msg_ret"] = "成功退货";
+?>

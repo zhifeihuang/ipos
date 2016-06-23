@@ -1,0 +1,31 @@
+<?php
+$lang["sales_takings"] = "付款";
+$lang["sales_start_typing_item_name"] = "输入产品名或扫描条码...";
+$lang["sales_sub_total"] = "小计";
+$lang["sales_total"] = "总计";
+$lang["sales_customer_total"] = "会员价";
+$lang["sales_customer"] = "会员号";
+$lang["sales_payment"] = "实收";
+$lang["sales_more_than"] = "付款金额不足";
+$lang["sales_pay"] = "付款";
+$lang["sales_change"] = "找零";
+$lang['sales_payment_title'] = "付款类型";
+$lang['sales_payment_type'] = array('cash'=>'现金','check'=>'支票','credit'=>'刷卡');
+$lang["sales_msg_sale"] = "保存成功";
+$lang["sales_err_param"] = "参数错误，请检查";
+$lang["sales_err"] = "操作失败";
+$lang["sales_err_pay"] = "付款失败";
+$lang["sales_msg_pay"] = "付款成功";
+$lang["sales_msg_suspend"] = "保存数据成功";
+$lang["sales_err_suspend_data"] = "数据错误,请重新扫描";
+$lang["sales_err_suspend_table"] = "保存数据出错";
+$lang["sales_calc"] = "结算";
+$lang["sales_err_calc"] = "操作失败";
+$lang["sales_invoice_number"] = "请输入票据号";
+$lang["sales_line"] = "行号";
+$lang["sales_ret_quantity"] = "退货数量";
+$lang["sales_s_quantity"] = "购买数量";
+$lang["sales_ret_q_s"] = "退货数量必须小于等于购买数量";
+$lang["sales_err_ret"] = "操作失败";
+$lang["sales_msg_ret"] = "成功退货";
+?>
