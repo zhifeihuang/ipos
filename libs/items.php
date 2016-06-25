@@ -282,7 +282,7 @@ public function search(&$ipos) {
 	$ipos->assign('item_pic_dir', $app['item_pic_dir']);
 	$ipos->assign('items', $result);
 	$ipos->assign('subgrant', $this->subgrant);
-	echo json_encode(array('rows' => $ipos->fetch('items/table_row.tpl'), 'offset' => $limit));
+	echo json_encode(array('rows' => $ipos->fetch('items/table_row.tpl'), 'total_rows' => count($result), 'offset' => $limit));
 }
 
 public function suggest_category() {

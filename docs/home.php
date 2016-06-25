@@ -13,7 +13,7 @@ require_once('../libs/report.php');
 
 $ipos = new smarty_ipos;
 if (!$ipos->db) {
-	$ipos->langauge(array('common'));
+	$ipos->language(array('common'));
 	$ipos->err_page($ipos->err);
 	return;
 }

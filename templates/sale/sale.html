@@ -86,7 +86,7 @@ $(document).ready(function() {
 				var tr = $(input).closest('tr');
 				var t4 = $('td:eq(4)', tr);
 				$(t4).attr("value", $(t4).text()).text($.number($(t4).text(), {$config['currency_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
-				$(input).number(true, 0, '', "{$config['thousands_separator']}");
+				$(input).number(true, {$config['quantity_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}");
 			} else {
 				$(input).val(parseInt($(input).val()) + 1);
 			}
@@ -119,6 +119,9 @@ $(document).ready(function() {
 				$('#suspend').val(response.id);
 				$('#print').prop('checked', response.print);
 				$('#customer').val(response.customer);
+				$('#sale_items > tbody > tr input').each(function() {
+					$(this).rules('removes');
+				});
 				$('#sale_items > tbody').empty().append(response.data);
 				$('#item_name').focus();
 			} else {
@@ -238,6 +241,9 @@ function change_dialog(data, title, fun) {
 
 function clear() {
 	$('#sale_form :text, :password, :file').val('');
+	$('#sale_items > tbody > tr input').each(function() {
+		$(this).rules('removes');
+	});
 	$('#sale_items > tbody').empty();
 	$('#suspend').val(-1);
 	$('#item_name').focus();

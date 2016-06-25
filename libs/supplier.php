@@ -187,7 +187,7 @@ public function search(&$ipos) {
 	$ipos->assign('controller_name', 'suppliers');
 	$ipos->assign('person', $suggestions);
 	$ipos->assign('subgrant', $this->subgrant);
-	echo json_encode(array('rows' => $ipos->fetch('suppliers/table_row.tpl'), 'offset' => $limit));
+	echo json_encode(array('rows' => $ipos->fetch('suppliers/table_row.tpl'), 'offset' => $limit, 'total_rows' => count($suggestions)));
 }
 
 public function suggest_supplier() {

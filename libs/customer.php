@@ -255,7 +255,7 @@ public function search(&$ipos) {
 	$ipos->assign('controller_name', 'customers');
 	$ipos->assign('person', $suggestions);
 	$ipos->assign('subgrant', $this->subgrant);
-	echo json_encode(array('rows' => $ipos->fetch('person/table_row.tpl'), 'offset' => $limit));
+	echo json_encode(array('rows' => $ipos->fetch('person/table_row.tpl'), 'offset' => $limit, 'total_rows' => count($suggestions)));
 }
 
 public function check_account_number() {

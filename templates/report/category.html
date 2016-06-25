@@ -54,7 +54,7 @@ $(document).ready(function() {
 			var t1 = $('td:eq(1)', $(this));
 			var t2 = $('td:eq(2)', $(this));
 			var t3 = $('td:eq(3)', $(this));
-			t1.text($.number(t1.text(), {$config['currency_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
+			t1.text($.number(t1.text(), {$config['quantity_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
 			t2.text($.number(t2.text(), {$config['currency_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
 			t3.text($.number(t3.text(), {$config['currency_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
 		});

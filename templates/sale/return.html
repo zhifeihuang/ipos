@@ -62,12 +62,15 @@ $(document).ready(function() {
 	var ret = function(data) {
 		$.post('home.php?act=sales&f=search', { term: data }, function(response) {
 			$('#ret_form :text, :password, :file').val('');
-			$('#sale_id').val(response.id);
+			$('#sale_id').val(response.id);	
+			$('#ret_items > tbody > tr input').each(function() {
+				$(this).rules('removes');
+			});
 			$('#ret_items > tbody').empty().append(response.data);
 			$('#ret_items > tbody > tr').each(function() {
 				var input = $('td:eq(4) input', $(this)).eq(0);
 				input.rules('add', { min_1:true, more:true, messages: { min_1:"{$lang['recvs_min_0']}", mire:"{$lang['sales_ret_q_s']}" } } );
-				input.number(true, 0, '', "{$config['thousands_separator']}");
+				input.number(true, {$config['quantity_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}");
 				input.blur(function() {
 					calc_tr($(this));
 					calc_total();
@@ -76,7 +79,7 @@ $(document).ready(function() {
 				var t5 = $('td:eq(5)', $(this));
 				var t6 = $('td:eq(6)', $(this));
 				var t7 = $('td:eq(7)', $(this));
-				t5.attr('value', t5.text()).text($.number(t5.text(), 0, '', "{$config['thousands_separator']}"));
+				t5.attr('value', t5.text()).text($.number(t5.text(), {$config['quantity_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
 				t6.attr('value', t6.text()).text($.number(t6.text(), {$config['currency_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
 				t7.attr('value', t7.text()).text($.number(t7.text(), {$config['currency_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
 			});
@@ -112,6 +115,9 @@ $(document).ready(function() {
 				success: function(response)	{
 					if (response.success) {
 						$('#return_form :text, :password, :file').val('');
+						$('#ret_items > tbody > tr input').each(function() {
+							$(this).rules('removes');
+						});
 						$('#ret_items > tbody').empty();
 						set_feedback(response.msg, 'alert alert-dismissible alert-success', false);
 					} else {

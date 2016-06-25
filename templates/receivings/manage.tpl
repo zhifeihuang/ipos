@@ -83,7 +83,7 @@ $(document).ready(function() {
 			if ($(row).length == 0) {
 				$("#order_items > tbody").append(ht);
 				$(row).rules("add", { min_1: true, messages: { min_1: "{$lang['recvs_min_1']}" } } );
-				$(row).number(true, 0, '', "{$config['thousands_separator']}");
+				$(row).number(true, {$config['quantity_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}");
 			}
 			$("#item_name").val("");
 			return false;
@@ -99,9 +99,12 @@ $(document).ready(function() {
 			$(form).ajaxSubmit({
 				success: function(response)	{
 					if(response.success) {
-						$("#order_number").val(response.number);
+						$('#order_number').val(response.number);
 						$('#order_form :text, :password, :file').not('#order_number,#order_person').val('');
-						$("#order_items > tbody").empty();
+						$('#order_items > tbody > tr input').each(function() {
+							$(this).rules('removes');
+						});
+						$('#order_items > tbody').empty();
 						set_feedback(response.msg, 'alert alert-dismissible alert-success', false);		
 					} else {
 						set_feedback(response.msg, 'alert alert-dismissible alert-danger', false);		
@@ -160,8 +163,10 @@ $(document).ready(function() {
 				$("#order_number1").val(response.recv['number']);
 				$("#order_id").val(response.recv['id']);
 				$("#order_emp").val(response.recv['emp']);
+				$('#recv_items > tbody > tr input').each(function() {
+					$(this).rules('removes');
+				});
 				$("#recv_items > tbody").empty().append(response.row);
-				$("#order_total").number(true, {$config['currency_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}");
 				
 				$("#recv_items > tbody > tr").each(function() {
 					var input = $("td:eq(4) input", $(this)).eq(0);
@@ -176,15 +181,15 @@ $(document).ready(function() {
 					});
 					
 					$(input).rules("add", { min_0: true, required: true, messages: { min_0: "{$lang['recvs_min_0']}", required: "{$lang['recvs_quantity_required']}" } } );
-{* this not work
-					$(input).number(true, 0, '', "{$config['thousands_separator']}");
+
+					$(input).number(true, {$config['quantity_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}");
 					$(input).val($(input).val());
-*}					
+					
 					var t3 = $("td:eq(3)", $(this));
 					var t5 = $("td:eq(5)", $(this));
 					var t6 = $("td:eq(6)", $(this));
 					var t7 = $("td:eq(7)", $(this));
-					$(t3).attr("value", $(t3).text()).text($.number($(t3).text(), 0, '', "{$config['thousands_separator']}"));
+					$(t3).attr("value", $(t3).text()).text($.number($(t3).text(), {$config['quantity_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
 					$(t5).attr("value", $(t5).text()).text($.number($(t5).text(), {$config['currency_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
 					$(t6).attr("value", $(t6).text()).text($.number($(t6).text(), {$config['tax_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
 					$(t7).attr("value", $(t7).text()).text($.number($(t7).text(), {$config['currency_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
@@ -209,6 +214,9 @@ $(document).ready(function() {
 				success: function(response)	{
 					if(response.success) {
 						$('#recv_form :text, :password, :file').val('');
+						$('#recv_items > tbody > tr input').each(function() {
+							$(this).rules('removes');
+						});
 						$("#recv_items > tbody").empty();
 						set_feedback(response.msg, 'alert alert-dismissible alert-success', false);		
 					} else {
@@ -277,14 +285,16 @@ $(document).ready(function() {
 					});
 					
 					var tr = $("#ret_" + id).closest("tr");
+					var t5 = $("td:eq(5)", tr);
 					var t7 = $("td:eq(7)", tr);
 					var t8 = $("td:eq(8)", tr);
 					var t9 = $("td:eq(9)", tr);
+					t5.attr("value", t5.text()).text($.number(t5.text(), {$config['quantity_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
 					t7.attr("value", t7.text()).text($.number(t7.text(), {$config['currency_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
 					t8.attr("value", t8.text()).text($.number(t8.text(), {$config['tax_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
 					t9.attr("value", t9.text()).text($.number(t9.text(), {$config['currency_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
 					
-					$("#ret_" + id).number(true, 0, '', "{$config['thousands_separator']}");
+					$("#ret_" + id).number(true, {$config['quantity_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}");
 				}
 			},
 			'json');
@@ -303,6 +313,9 @@ $(document).ready(function() {
 				success: function(response)	{
 					if(response.success) {
 						$("#ret_total").val('');
+						$('#ret_items > tbody > tr input').each(function() {
+							$(this).rules('removes');
+						});
 						$("#ret_items > tbody").empty();
 						set_feedback(response.msg, 'alert alert-dismissible alert-success', false);		
 					} else {

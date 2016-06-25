@@ -168,7 +168,7 @@ public function item(&$ipos) {
 		JOIN items as i ON ri.item_id=i.item_id
 		JOIN item_quantities as iq ON i.item_id=iq.item_id
 		LEFT JOIN suppliers as s ON i.supplier_id=s.person_id
-		WHERE ri.item_id='. $id .' ORDER BY ri.recv_id DESC');
+		WHERE r.recv_person!=-1 AND ri.item_id='. $id .' ORDER BY ri.recv_id DESC');
 	if ($sel = $this->db->select()) {
 		$total = 0;
 		$ids = array();
