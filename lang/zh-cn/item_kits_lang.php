@@ -20,5 +20,6 @@ $lang["item_kits_msg_delete"] = "删除成功";
 $lang["item_kits_msg_update"] = "更新套件成功";
 $lang["item_kits_update"] = "更新套件";
 $lang["item_kits_unit_percent"] = "利润";
-$lang["item_kits_quantity_0"] = "数量必须大于0";
+$lang["item_kits_val_0"] = "数值 >= 0";
+$lang["item_kits_val_1"] = "数值 > 0";
 ?>

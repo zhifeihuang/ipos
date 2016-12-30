@@ -2,7 +2,7 @@
 return array(
 // locale
 	'config_currency_decimals' => array(0,1,2),
-	'config_quantity_decimals' => array(0,1,2,3),
+	'config_kg_decimals' => array(0,1,2,3),
 	'config_tax_decimals' => array(0,1,2,3),
 	'config_decimal_point' => array(','=>', (comma)','.'=>'. (dot)'),
 	'config_thousands_separator' => array('\''=>'\' (apostrophe)',','=>', (comma)','.'=>'. (dot)',''=>'(none)'),

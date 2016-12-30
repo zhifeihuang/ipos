@@ -24,7 +24,7 @@ private $flt_general = array('company' => FILTER_SANITIZE_SPECIAL_CHARS,
 private $flt_locale = array('currency_symbol' => FILTER_SANITIZE_SPECIAL_CHARS,
 					'currency_side' => FILTER_VALIDATE_INT,
 					'currency_decimals' => FILTER_VALIDATE_INT,
-					'quantity_decimals' => FILTER_VALIDATE_INT,
+					'kg_decimals' => FILTER_VALIDATE_INT,
 					'tax_decimals' => FILTER_VALIDATE_INT,
 					'decimal_point' => FILTER_SANITIZE_SPECIAL_CHARS,
 					'thousands_separator' => FILTER_SANITIZE_SPECIAL_CHARS,
@@ -48,12 +48,10 @@ private $flt_barcode = array('barcode_type' => FILTER_SANITIZE_SPECIAL_CHARS,
 private $flt_stock = array('change' => FILTER_SANITIZE_SPECIAL_CHARS,
 					'add' => FILTER_SANITIZE_SPECIAL_CHARS,
 					'remove' => FILTER_SANITIZE_SPECIAL_CHARS);
-private $flt_receipt = array('invoice_default_comments' => FILTER_SANITIZE_SPECIAL_CHARS,
-					'receipt_show_taxes' => FILTER_VALIDATE_INT,
+private $flt_receipt = array('receipt_show_taxes' => FILTER_VALIDATE_INT,
 					'show_total_discount' => FILTER_VALIDATE_INT,
 					'print_silently' => FILTER_VALIDATE_INT,
-					'print_header' => FILTER_VALIDATE_INT,
-					'print_footer' => FILTER_VALIDATE_INT,
+					'print_footer' => FILTER_SANITIZE_SPECIAL_CHARS,
 					'sales_invoice_format' => FILTER_SANITIZE_SPECIAL_CHARS,
 					'recv_invoice_format' => FILTER_SANITIZE_SPECIAL_CHARS,
 					'order_invoice_format' => FILTER_SANITIZE_SPECIAL_CHARS,
@@ -275,8 +273,6 @@ public function receipt(&$ipos) {
 	if (!$var['receipt_show_taxes']) $var['receipt_show_taxes'] = 0;
 	if (!$var['show_total_discount']) $var['show_total_discount'] = 0;
 	if (!$var['print_silently']) $var['print_silently'] = 0;
-	if (!$var['print_header']) $var['print_header'] = 0;
-	if (!$var['print_footer']) $var['print_footer'] = 0;
 	
 	$update = array();
 	foreach ($var as $k => $v) {
@@ -399,7 +395,7 @@ private function get_all_role($permission, $default_permission, $ipos) {
 private function receipt_file($dir) {
 	require '../libs/help/common.php';
 	if (($sale = files($dir . 'sale')) === false
-		|| ($recv = files($dir . 'receive')) === false
+		|| ($recv = files($dir . 'recv')) === false
 		|| ($order = files($dir . 'order')) === false
 		|| ($ret = files($dir . 'return')) === false) {
 		return false;

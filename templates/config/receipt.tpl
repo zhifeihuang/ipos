@@ -2,13 +2,6 @@
 	<fieldset>
 		<div id="required_fields_message">{$lang['common_fields_required_message']}</div>
 		<ul class="error_message_box" id="receipt_error_message_box"></ul>
-
-		<div class="form-group form-group-sm">	
-		<label class="control-label col-xs-2" for="invoice_default_comments">{$lang['config_invoice_default_comments']}</label>				<div class="col-xs-5">
-			<textarea name="invoice_default_comments" class="form-control input-sm" id="invoice_default_comments" rows="2" cols="40">{$config['invoice_default_comments']}</textarea>
-			</div>
-		</div>
-
 		<div class="form-group form-group-sm">    
 			<label class="control-label col-xs-2 required" for="sales_invoice_format">{$lang['config_sales_invoice_format']}</label>				<div class="col-xs-2">
 				<input name="sales_invoice_format" class="form-control input-sm" id="sales_invoice_format" type="text" value="{$config['sales_invoice_format']}">
@@ -50,16 +43,16 @@
 			<input name="print_silently" id="print_silently" type="checkbox" {if $config['print_silently']}checked="checked"{/if} value="1">
 			</div>
 		</div>
-
+{**
 		<div class="form-group form-group-sm">	
 		<label class="control-label col-xs-2" for="print_header">{$lang['config_print_header']}</label>				<div class="col-xs-1">
 			<input name="print_header" id="print_header" type="checkbox" {if $config['print_header']}checked="checked"{/if} value="1">
 			</div>
 		</div>
-
-		<div class="form-group form-group-sm">	
-		<label class="control-label col-xs-2" for="print_footer">{$lang['config_print_footer']}</label>				<div class="col-xs-1">
-			<input name="print_footer" id="print_footer" type="checkbox" {if $config['print_footer']}checked="checked"{/if} value="1">
+**}
+		<div class="form-group form-group-sm">
+		<label class="control-label col-xs-2" for="print_footer">{$lang['config_print_footer']}</label>				<div class="col-xs-5">
+			<textarea name="print_footer" class="form-control input-sm" id="print_footer" rows="2" cols="40">{$config['print_footer']}</textarea>
 			</div>
 		</div>
 
@@ -69,10 +62,12 @@
 <script type="text/javascript">
 //validation and submit handling
 $(document).ready(function() {
+{nocache}
 	var sale_file = {$sale_file};
 	var recv_file = {$recv_file};
 	var order_file = {$order_file};
 	var ret_file = {$ret_file};
+{/nocache}
 	
 	$("#sales_invoice_format").autocomplete( { source:sale_file, autoFocus: false, delay:500 } );
 	$("#recv_invoice_format").autocomplete( { source:recv_file, autoFocus: false, delay:500 } );

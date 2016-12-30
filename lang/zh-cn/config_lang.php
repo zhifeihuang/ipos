@@ -121,5 +121,5 @@ $lang["config_print_silently"] = "默认打印";
 $lang["config_company_start"] = "开始时间";
 $lang["config_company_start_required"] = "请输入开始时间";
 $lang["config_company_start_format"] = "(20160601)";
-$lang["config_quantity_decimals"] = "数量保留小数点位数";
+$lang["config_kg_decimals"] = "重量保留小数点位数";
 ?>

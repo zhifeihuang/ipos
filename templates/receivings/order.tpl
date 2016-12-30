@@ -11,7 +11,7 @@
 			<ul>
 			<li class="pull-left">
 				<label class="control-label sr-only" for="order_number">{$lang['recvs_order_number']}</label>
-				<input class="form-control input-sm" title="{$lang['recvs_order_number']}" placeholder="{$lang['recvs_order_number']}" id="order_number" type="text" readonly>
+				<input class="form-control input-sm" title="{$lang['recvs_order_number_title']}" placeholder="{$lang['recvs_order_number']}" id="order_number" type="text" readonly>
 			</li>
 			<li class="pull-left">
 				<label class="control-label sr-only" for="order_person">{$lang['recvs_order_person']}</label>

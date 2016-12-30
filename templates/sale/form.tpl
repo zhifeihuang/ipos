@@ -16,7 +16,7 @@
 		
 		<div class="form-group">
 			<label class="control-label col-xs-3 required" for="payment">{$lang['sales_payment']}({$config['currency_symbol']})</label>			<div class="col-xs-6">
-				<input name="payment" class="form-control autofocus" id="payment" type="number" value="">
+				<input name="payment" class="form-control autofocus" id="payment" type="text" value="">
 			</div>
 		</div>
 	</fieldset>
@@ -37,6 +37,16 @@ $(document).ready(function() {
 					if (!response.success) {
 						alert(response.msg);
 						return false;
+					}
+					
+					if (response.print) {
+						//window.open(response.print, '_blank', 'scrollbars=no,menubar=no,toolbar=no,status=no,titlebar=no');
+						var print_win = window.open();
+						print_win.document.write(response.print);
+						print_win.document.close();
+						print_win.focus();
+						print_win.print();
+						print_win.close();
 					}
 					
 					change_dialog(response.data, "{$lang['sales_change']}", 'change_ok');

@@ -121,5 +121,5 @@ $lang["config_print_silently"] = "print silent";
 $lang["config_company_start"] = "company start";
 $lang["config_company_start_required"] = "Please input company start time";
 $lang["config_company_start_format"] = "(20160601)";
-$lang["config_quantity_decimals"] = "Quantity Decimals";
+$lang["config_kg_decimals"] = "kg Decimals";
 ?>

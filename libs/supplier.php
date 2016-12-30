@@ -130,6 +130,10 @@ public function update(&$ipos) {
 }
 
 public function delete(&$ipos) {
+	if (($key = array_search(1, $_REQUEST['ids'])) !== false) {
+		unset($_REQUEST['ids'][$key]);
+	}
+	
 	if (empty($_REQUEST['ids'])) {
 		echo json_encode(array("success" => false, "msg" => $ipos->lang['suppliers_err']));
 		return;

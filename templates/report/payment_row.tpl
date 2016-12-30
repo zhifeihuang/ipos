@@ -25,7 +25,7 @@
 {/strip}
 <script type="text/javascript">
 $(document).ready(function() {
-	$('#supp_items > tbody > tr').each(function() {
+	$('#pay_items > tbody > tr').each(function() {
 		var t2 = $('td:eq(2)', $(this));
 		t2.text($.number(t2.text(), {$config['currency_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
 	});

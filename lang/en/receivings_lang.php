@@ -4,6 +4,7 @@ $lang["recvs_total"] = "Total";
 $lang["recvs_print_after_sale"] = "Print after sale";
 $lang["recvs_quantity"] = "Qty";
 $lang["recvs_order_number"] = "ONb";
+$lang["recvs_order_number_title"] = "order number";
 $lang["recvs_recv_date"] = "Date";
 $lang["recvs_emp"] = "Employee";
 $lang["recvs_min_0"] = "Quantity must >= 0";

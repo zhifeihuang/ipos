@@ -7,7 +7,7 @@
 				<input class="form-control input-sm" placeholder="{$lang['recvs_recv_date']}" id="order_date" type="text" readonly>
 			</div>
 			<div class="col-xs-3">
-				<input class="form-control input-sm" placeholder="{$lang['recvs_order_number']}" id="order_number1" type="text" readonly>
+				<input class="form-control input-sm" placeholder="{$lang['recvs_order_number_title']}" id="order_number1" type="text" readonly>
 				<input name="id" id="order_id" type="hidden">
 			</div>
 			<div class="col-xs-3">

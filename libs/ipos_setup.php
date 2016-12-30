@@ -1,16 +1,18 @@
 <?php
 // hack version example that works on both *nix and windows
 // Smarty is assumend to be in 'includes/' dir under current script
-define('SMARTY_DIR', 'C:/Users/zhifei/server/smarty/libs/');
-define('IPOS_DIR', 'C:/Users/zhifei/server/www/ospos/');
+define('SMARTY_DIR', '/home/pi/smarty/vendor/smarty/smarty/libs/');
+define('IPOS_DIR', '/home/pi/myipos/');
+define('IPOS_TMP', '/home/pi/tmp/');
 
 require_once(SMARTY_DIR . 'Smarty.class.php');
 require_once('../libs/help/lang.php');
 require_once('../libs/session.php');
 require_once('../libs/db/database.php');
 
-@ini_set('error_log', IPOS_DIR . 'log');
-@session_save_path('C:/Users/zhifei/server/www/ospos/session/');
+@date_default_timezone_set('Asia/Shanghai');
+@ini_set('error_log',  IPOS_TMP .'log');
+@session_save_path(IPOS_TMP .'session/');
 
 class smarty_ipos extends Smarty {
 public $err = null;
@@ -21,9 +23,9 @@ public $session = null;
 public function __construct() {
 	parent::__construct();
 	$this->setTemplateDir(IPOS_DIR . 'templates');
-	$this->setCompileDir(IPOS_DIR . 'templates_c');
+	$this->setCompileDir(IPOS_TMP . 'templates_c');
 	$this->setConfigDir(IPOS_DIR . 'configs');
-	$this->setCacheDir(IPOS_DIR . 'cache');
+	$this->setCacheDir(IPOS_TMP . 'cache');
 	$this->addPluginsDir(IPOS_DIR .'libs/myplugin/');
 	
 	$this->setCaching(Smarty::CACHING_LIFETIME_CURRENT);
@@ -54,7 +56,7 @@ public function language($textpart = array()) {
 
 public function err_page($err) {
 	$this->assign('err', isset($this->lang[$err]) ? $this->lang[$err] : 'Sorry, very bad!');
-	$this->display('err.tpl');
+	$this->display(IPOS_DIR . 'templates/err.tpl');
 	exit();
 }
 

@@ -3,8 +3,8 @@ return [
 'default' => 'mysql',
 'host'      => '127.0.0.1',
 'database'  => 'ipos',
-'usrname'  => 'ospos',
-'password'  => '',
+'usrname'  => 'test',
+'password'  => '11111111',
 
 
 'sqlite' => [

@@ -29,9 +29,21 @@ function post(url, param, callback)
 
 function quit() {
 	post("home.php", "act=logout", null);
-	window.open('', '_parent', '');
-	window.opener = null;
-	window.close();
+	
+	if (navigator.userAgent.indexOf("MSIE") > 0) {
+            if (navigator.userAgent.indexOf("MSIE 6.0") > 0) {
+                window.opener = null; window.close();
+            } else {
+                window.open('', '_top'); window.top.close();
+            }
+	} else if (navigator.userAgent.indexOf("Firefox") > 0) {
+		window.location.href = 'about:blank ';
+		//window.history.go(-2);  
+	} else {
+		window.opener = null;
+		window.open('', '_self', '');
+		window.close();
+	}
 }
 
 function ipos_set_feedback(text, classname, keep_displayed)

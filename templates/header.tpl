@@ -24,7 +24,7 @@
 				</button>
 		
 				<div class="navbar-brand hidden-sm">
-					<a style="display:overflow">{$name}</a>
+					<a style="display:overflow">{nocache}{$name}{/nocache}</a>
 					<a style="display:overflow" onclick="quit()">{$lang['logout']}</a>
 				</div>
 			</div>

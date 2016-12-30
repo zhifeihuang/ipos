@@ -3,10 +3,11 @@ require_once '../libs/secure.php';
 require_once '../libs/items.php';
 
 class item_kits extends secure {
-const cquantity = 100;
 private $item;
 private $flt = array('item_number'=>FILTER_SANITIZE_SPECIAL_CHARS,
 					'name'=>FILTER_SANITIZE_SPECIAL_CHARS,
+					'discount'=>FILTER_VALIDATE_INT,
+					'quantity'=>FILTER_VALIDATE_INT,
 					'description'=>FILTER_SANITIZE_SPECIAL_CHARS);
 
 private $flt_more = array('offset' => FILTER_VALIDATE_INT, 
@@ -83,7 +84,7 @@ public function get(&$ipos) {
 		return;
 	}
 	
-	$var = $result[0];
+	$var = $result[1];
 	$ipos->assign('item', $var['item']);
 	$ipos->assign('kit_items', $var['kit_items']);
 	echo $ipos->fetch('item_kits/form.tpl');
@@ -102,7 +103,7 @@ public function check_item_number() {
 
 public function save(&$ipos) {
 	$result = $this->filter();
-	if (($id = $this->item->maxid()) === false) {
+	if (empty($result['kit_item']) || ($id = $this->item->maxid()) === false) {
 		echo json_encode(array("success" => false, "msg" => $ipos->lang['item_kits_err_save']));
 		return;
 	}
@@ -110,19 +111,18 @@ public function save(&$ipos) {
 	
 	$this->db->beginTransaction();
 	
-	if ($this->item->save_table('item_kits', $result['kit'], $id, 'item_kit_id') === false) {
+	if ($this->item->save_table('item_kits', $result['kit'], $id, 'item_kit_id') === false
+		|| $this->item->save_table('item_quantities', array('quantity'=>0), $id) === false) {
 		$this->db->rollBack();
 		echo json_encode(array("success" => false, "msg" => $ipos->lang['item_kits_err_save']));
 		return;
 	}
 	
-	if ($result['kit_item'] !== null) {
-		foreach ($result['kit_item'] as $v) {
-			if ($this->item->save_table('item_kit_items', $v, $id, 'item_kit_id') === false) {
-				$this->db->rollBack();
-				echo json_encode(array("success" => false, "msg" => $ipos->lang['item_kits_err_save']));
-				return;
-			}
+	foreach ($result['kit_item'] as $v) {
+		if ($this->item->save_table('item_kit_items', $v, $id, 'item_kit_id') === false) {
+			$this->db->rollBack();
+			echo json_encode(array("success" => false, "msg" => $ipos->lang['item_kits_err_save']));
+			return;
 		}
 	}
 	$this->db->commit();
@@ -130,36 +130,36 @@ public function save(&$ipos) {
 	$result['kit']['item_kit_id'] = $id;
 	$result['kit']['cost_price'] = $result['cost_price'];
 	$result['kit']['unit_price'] = $result['unit_price'];
+	$result['kit']['quantity'] = $result['quantity'];
 	$ipos->assign('items', array($result['kit']));
 	$ipos->assign('subgrant', $this->subgrant);
 	echo json_encode(array("success" => true, "msg" => $ipos->lang['item_kits_msg_save'], "id"=>$id, "row"=>$ipos->fetch('item_kits/table_row.tpl')));
 }
 
 public function update(&$ipos) {
-	if (empty($_REQUEST['id'])) {
+	$result = $this->filter();
+	if (empty($_REQUEST['id']) || empty($result['kit_item'])) {
 		echo json_encode(array("success" => false, "msg" => $ipos->lang['item_kits_err_update']));
 		return;
 	}
 	
 	$id = intval($_REQUEST['id']);
-	$result = $this->filter();
 	
 	$this->db->beginTransaction();
 	
 	if ($this->item->update_table('item_kits', $result['kit'], $id, 'item_kit_id') === false
+		|| $this->item->update_table('item_quantities', array('quantity'=>$result['quantity']), $id) === false
 		|| $this->del('item_kit_items', array(array($id))) === false) {
 		$this->db->rollBack();
 		echo json_encode(array("success" => false, "msg" => $ipos->lang['item_kits_err_update']));
 		return;
 	}
-	
-	if ($result['kit_item'] !== null) {
-		foreach ($result['kit_item'] as $v) {
-			if ($this->item->save_table('item_kit_items', $v, $id, 'item_kit_id') === false) {
-				$this->db->rollBack();
-				echo json_encode(array("success" => false, "msg" => $ipos->lang['item_kits_err_update']));
-				return;
-			}
+
+	foreach ($result['kit_item'] as $v) {
+		if ($this->item->save_table('item_kit_items', $v, $id, 'item_kit_id') === false) {
+			$this->db->rollBack();
+			echo json_encode(array("success" => false, "msg" => $ipos->lang['item_kits_err_update']));
+			return;
 		}
 	}
 	
@@ -168,6 +168,7 @@ public function update(&$ipos) {
 	$result['kit']['item_kit_id'] = $id;
 	$result['kit']['cost_price'] = $result['cost_price'];
 	$result['kit']['unit_price'] = $result['unit_price'];
+	$result['kit']['quantity'] = $result['quantity'];
 	$ipos->assign('items', array($result['kit']));
 	$ipos->assign('subgrant', $this->subgrant);
 	echo json_encode(array("success" => true, "msg" => $ipos->lang['item_kits_msg_save'], "id"=>$id, "row"=>$ipos->fetch('item_kits/table_row.tpl')));
@@ -186,7 +187,8 @@ public function delete (&$ipos) {
 		
 	$this->db->beginTransaction();
 	if ($this->del('item_kit_items', $ids) === false
-		|| $this->del('item_kits', $ids) === false) {
+		|| $this->del('item_kits', $ids) === false
+		|| $this->del('item_quantities', $ids, 'item_id') === false) {
 		$this->db->rollBack();
 		echo json_encode(array("success" => false, "msg" => $ipos->lang['item_kits_err_delete']));
 		return;
@@ -254,16 +256,17 @@ public function search(&$ipos) {
 	echo json_encode(array('rows' => $ipos->fetch('item_kits/table_row.tpl'), 'offset' => 100, 'total_rows'=>count($data)));
 }
 
-private function del($table, $ids) {
-	$this->db->query('DELETE FROM '. $table .' WHERE item_kit_id=?');
+private function del($table, $ids, $key="item_kit_id") {
+	$this->db->query('DELETE FROM '. $table .' WHERE '. $key .'=?');
 	return $this->db->delete($ids);
 }
 
 public static function get_info($db, $ids) {
-	$db->query("select it.*, iti.item_id as item_id, iti.quantity as quantity, i.cost_price as cost_price, i.name as item_name, i.cost_discount as cost_discount, i.tax_name as tax_name, i.unit_price as unit_price
-		from item_kits as it 
-		left join item_kit_items as iti on iti.item_kit_id=it.item_kit_id 
-		left join items as i on i.item_id=iti.item_id and i.deleted=0
+	$db->query("select it.*, iti.item_id as item_id, iti.quantity as quantity, i.cost_price as cost_price, i.name as item_name, i.cost_discount as cost_discount, i.tax_name as tax_name, i.unit_price as unit_price, iq.quantity as qty, s.company_name as company_name from item_kits as it 
+		join item_quantities as iq on iq.item_id=it.item_kit_id
+		join item_kit_items as iti on iti.item_kit_id=it.item_kit_id 
+		join items as i on i.item_id=iti.item_id and i.deleted=0
+		left join suppliers as s on s.person_id=i.supplier_id
 		where it.item_kit_id=?");
 	if ($sel = $db->select($ids)) {
 		$cost = 0;
@@ -274,18 +277,19 @@ public static function get_info($db, $ids) {
 		$result = array();
 		foreach ($sel as $row) {
 			if ($item_kit_id !== $row['item_kit_id']) {
-				if ($item_kit_id !== -1) {
-					$item['cost_price'] = $cost;
-					$item['unit_price'] = $unit;
-					$result[] = array('item'=>$item, 'kit_items'=>$kit_items);
-					$cost = $unit = 0;
-				}
+				$item['cost_price'] = $cost;
+				$item['unit_price'] = $unit * (1 - $row['discount'] / 100);
+				$result[] = array('item'=>$item, 'kit_items'=>$kit_items);
+				$cost = $unit = 0;
+				$kit_items = array();
 				$item_kit_id = $row['item_kit_id'];
-				
 				$item['item_kit_id'] = $row['item_kit_id'];
 				$item['item_number'] = $row['item_number'];
 				$item['name'] = $row['name'];
 				$item['description'] = $row['description'];
+				$item['discount'] = $row['discount'];
+				$item['quantity'] = $row['qty'];
+				$item['company_name'] = $row['company_name'];
 			}
 			
 			if (!empty($row['item_id'])) {
@@ -303,8 +307,9 @@ public static function get_info($db, $ids) {
 		}
 		
 		$item['cost_price'] = $cost;
-		$item['unit_price'] = $unit;
+		$item['unit_price'] = $unit * (1 - $row['discount'] / 100);
 		$result[] = array('item'=>$item, 'kit_items'=>$kit_items);
+		unset($result[0]);
 		return $result;
 	} else {
 		return false;
@@ -312,9 +317,9 @@ public static function get_info($db, $ids) {
 }
 
 private function get_all($offset=0, $limit=100) {
-	$this->db->query('select it.*, iti.item_id as item_id, iti.quantity as quantity, 
-		i.cost_price as cost_price, i.name as item_name, i.unit_price as unit_price, i.cost_discount as cost_discount
+	$this->db->query('select it.*, iti.item_id as item_id, iti.quantity as quantity, i.cost_price as cost_price, i.name as item_name, i.unit_price as unit_price, i.cost_discount as cost_discount, iq.quantity as qty
 		from item_kits as it 
+		join item_quantities as iq on iq.item_id=it.item_kit_id
 		left join item_kit_items as iti on iti.item_kit_id=it.item_kit_id 
 		left join items as i on i.item_id=iti.item_id and i.deleted=0 order by it.item_kit_id asc limit '. $offset .','. $limit);
 	$items = array();
@@ -328,21 +333,17 @@ private function get_all($offset=0, $limit=100) {
 			++$total;
 			++$element;
 			if ($item_kit_id != $row['item_kit_id']) {
-				if ($item_kit_id != -1) {
-					$item['cost_price'] = $cost;
-					$item['unit_price'] = $unit;
-					$items[] = $item;
-					$cost = 0;
-					$unit = 0;
-					$element = 0;
-				}
+				$item['cost_price'] = $cost;
+				$item['unit_price'] = $unit * (1 - $row['discount'] / 100);
+				$items[] = $item;
+				$cost = $unit = $element = 0;
 				
 				$item_kit_id = $row['item_kit_id'];
 				$item['item_kit_id'] = $row['item_kit_id'];
 				$item['item_number'] = $row['item_number'];
 				$item['name'] = $row['name'];
-				$item['unit_price'] = $row['unit_price'];
 				$item['description'] = $row['description'];
+				$item['quantity'] = $row['qty'];
 			}
 			
 			if (!empty($row['item_id'])) {
@@ -353,11 +354,13 @@ private function get_all($offset=0, $limit=100) {
 		
 		if ($total < $limit && $total > 0) {
 			$item['cost_price'] = $cost;
-			$item['unit_price'] = $unit;
+			$item['unit_price'] = $unit * (1 - $row['discount'] / 100);
 			$items[] = $item;
 		} else if ($total == $limit) {
 			// $total - $element is total of selection.
 		}
+		
+		unset($items[0]);
 	}
 	
 	return $items;
@@ -365,6 +368,7 @@ private function get_all($offset=0, $limit=100) {
 
 private function filter() {
 	$var = filter_var_array($_REQUEST, $this->flt);
+	if ($var['discount'] < 0 || $var['discount'] >= 100) $var['discount'] = 0;
 
 	$kit_item = null;
 	if (!empty($_REQUEST['item_kit_item'])) {
@@ -373,6 +377,8 @@ private function filter() {
 		}
 	}
 	
+	$result['quantity'] = $var['quantity'] > 0 ? $var['quantity'] : 0;
+	unset($var['quantity']);
 	$result['kit'] = $var;
 	$result['kit_item'] = $kit_item;
 	$result['cost_price'] = isset($_REQUEST['cost_price']) ? floatval($_REQUEST['cost_price']) : '';
@@ -390,7 +396,7 @@ private function search_data($var, $offset=0, $limit=100) {
 	$this->db->order('ORDER BY it.item_kit_id ASC');
 	$result = $this->db->search($var, $this->conv, array($this, 'conversion'), $offset, $limit);
 	if ($result === -1) {
-		$this->db->query('SELECT distinct(item_kit_id) FROM item_kits WHERE (');
+		$this->db->query('SELECT distinct(item_kit_id) FROM item_kitsWHERE (');
 		$this->db->order('ORDER BY item_kit_id ASC');
 		$result = $this->db->search_suggestions($var['label'], $this->table_struct, $this->sconv, array($this, 'sugg_conv'), false, $offset, $limit);
 	}

@@ -94,4 +94,7 @@ $lang["items_err_get"] = "获取信息失败，请检查是否被删除";
 $lang["items_err_save"] = "新增产品失败";
 $lang["items_err_update"] = "更新产品失败";
 $lang["items_err_g_barcode"] = "生成条码失败";
+$lang["items_serialnumber"] = "并连码";
+$lang["items_norm"] = "规格";
+$lang["items_discount_required"] = "请输入折扣";
 ?>

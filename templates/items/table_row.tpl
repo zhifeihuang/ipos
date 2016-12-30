@@ -8,7 +8,7 @@
 <td width="15%">{$v['company_name']}</td>
 <td width="10%">{currency number=$v['cost_price'] thousands_separator=$config['thousands_separator'] decimal_point=$config['decimal_point'] decimals=$config['currency_decimals']}</td>
 <td width="10%">{currency number=$v['unit_price'] thousands_separator=$config['thousands_separator'] decimal_point=$config['decimal_point'] decimals=$config['currency_decimals']}</td>
-<td width="8%">{quantity_decimals number=$v['quantity'] thousands_separator=$config['thousands_separator'] decimal_point=$config['decimal_point'] decimals=$config['quantity_decimals']}</td>
+<td width="8%">{if strlen($v['item_number']) > {$config['kg_barcode']}}{quantity number=$v['quantity']}{else}{kg_decimals number=$v['quantity'] thousands_separator=$config['thousands_separator'] decimal_point=$config['decimal_point'] decimals=$config['kg_decimals']}{/if}</td>
 <td width="10%">{$v['tax_name']}</td>
 
 {if !empty($subgrant["items_update"])}
@@ -16,6 +16,6 @@
 <td width="3%"><a title="{$lang["items_update"]}" class="modal-dlg modal-btn-submit" href="home.php?act=items&f=get&id={$v['item_id']}"><span class="glyphicon glyphicon-edit"></span></a></td>
 {/if}
 {foreachelse}
-<tr><td colspan="13"><div class="alert alert-dismissible alert-info">{$lang['common_no_persons_to_display']}</div></td></tr>
+<tr><td colspan="13"><div class="alert alert-dismissible alert-info">{$lang['common_no_data_display']}</div></td></tr>
 {/foreach}
 {/nocache}

@@ -132,7 +132,6 @@ private function payment_data($start, $end, $emp) {
 	return array(null, 0);
 }
 
-
 private function supplier_data($start, $end, $supplier) {
 	if (empty($supplier)) {
 		$this->db->query('CREATE TEMPORARY TABLE IF NOT EXISTS report_supplier_recv
@@ -140,8 +139,7 @@ private function supplier_data($start, $end, $supplier) {
 				FROM recv_items_temp as rit
                 LEFT JOIN suppliers as sl ON rit.supplier_id=sl.person_id
 				WHERE recv_date BETWEEN ? AND ?
-				GROUP BY rit.supplier_id ORDER BY rit.supplier_id
-				)');
+				GROUP BY rit.supplier_id ORDER BY rit.supplier_id)');
 		if ($this->db->execute(array($start, $end)) === false) return false;
 		
 		$this->db->query('CREATE TEMPORARY TABLE IF NOT EXISTS report_supplier_sale
@@ -224,33 +222,54 @@ private function category_data($start, $end) {
 
 private function sale_table() {
 	$query = 'CREATE TEMPORARY TABLE IF NOT EXISTS sale_items_temp
-                (SELECT DATE(sale_date) as sale_date, si.sale_id, si.cost_price, si.unit_price, si.quantity, comment, p.payment_type, p.sale_payment_amount, cm_id, emp_id,
-                i.item_id, supplier_id, category,
+                SELECT DATE(s.sale_date) as sale_date, s.sale_id as sale_id, s.comment as comment, s.invoice_number as invoice_number, s.emp_id as emp_id, si.cost_price as cost_price, si.unit_price as unit_price, si.quantity as quantity, p.payment_type as payment_type, p.sale_payment_amount as sale_payment_amount,
+                i.item_id, i.supplier_id, i.category,
                 (si.unit_price * si.quantity) as subtotal,
-                si.line as line, serialnumber, si.description as description,
+                si.line as line, si.description as description,
                 (si.unit_price * si.quantity - si.cost_price * si.quantity) as profit,
-                (si.cost_price * si.quantity) as cost,
-                invoice_number
+                (si.cost_price * si.quantity) as cost
                 FROM sale_items as si
                 INNER JOIN sales as s ON si.sale_id=s.sale_id
                 INNER JOIN items as i ON si.item_id=i.item_id
-                INNER JOIN (SELECT sale_id, SUM(payment_amount) AS sale_payment_amount,
-                payment_type FROM sale_payments GROUP BY sale_id) AS p
-                ON si.sale_id=p.sale_id
-                GROUP BY sale_id, item_id, line)';
+                INNER JOIN (SELECT sale_id, SUM(payment_amount) AS sale_payment_amount, payment_type FROM sale_payments GROUP BY sale_id) AS p  ON si.sale_id=p.sale_id
+                GROUP BY s.sale_id, si.item_id, si.line
+				UNION
+				SELECT DATE(s.sale_date) as sale_date, s.sale_id as sale_id, s.comment as comment, s.invoice_number as invoice_number, s.emp_id as emp_id, si.cost_price as cost_price, si.unit_price as unit_price, si.quantity as quantity, p.payment_type as payment_type, p.sale_payment_amount as sale_payment_amount,
+				itk.item_kit_id as item_id, itk.supplier_id , itk.category,
+                (si.unit_price * si.quantity) as subtotal,
+                si.line as line, si.description as description,
+                (si.unit_price * si.quantity - si.cost_price * si.quantity) as profit,
+                (si.cost_price * si.quantity) as cost
+                FROM sale_items as si
+                INNER JOIN sales as s ON si.sale_id=s.sale_id
+				INNER JOIN (SELECT distinct(it.item_kit_id), i.category, i.supplier_id FROM item_kits as it 
+							JOIN item_kit_items as iti ON it.item_kit_id=iti.item_kit_id
+							JOIN items as i ON iti.item_id=i.item_id) AS itk ON si.item_id=itk.item_kit_id
+                INNER JOIN (SELECT sale_id, SUM(payment_amount) AS sale_payment_amount, payment_type FROM sale_payments GROUP BY sale_id) AS p  ON si.sale_id=p.sale_id
+                GROUP BY s.sale_id, si.item_id, si.line';
 	$this->db->query($query);
 	$this->db->execute();
 }
 
 private function recv_table() {
 	$query = 'CREATE TEMPORARY TABLE IF NOT EXISTS recv_items_temp
-                (SELECT date(recv_date) as recv_date, ri.recv_id, comment, invoice_number, recv_person, ri.recv_quantity, ri.line as line, serialnumber, ri.cost_price,
+                SELECT date(r.recv_date) as recv_date, r.comment as comment, r.invoice_number as invoice_number, r.recv_person as recv_person, ri.recv_id, ri.recv_quantity, ri.line as line, ri.cost_price,
                 i.item_id, i.supplier_id, i.item_number, i.name,
                 (ri.cost_price*ri.recv_quantity*(1 - ri.discount/100)) as cost
                 FROM recv_items as ri
                 INNER JOIN recv as r ON  ri.recv_id=r.recv_id
                 INNER JOIN items as i ON  ri.item_id=i.item_id
-                GROUP BY recv_id, item_id, line)';
+                GROUP BY r.recv_id, ri.item_id, ri.line
+				UNION
+				SELECT date(r.recv_date) as recv_date, r.comment as comment, r.invoice_number as invoice_number, r.recv_person as recv_person, ri.recv_id, ri.recv_quantity, ri.line as line, ri.cost_price,
+                itk.item_kit_id as item_id, itk.supplier_id, itk.item_number, itk.name,
+                (ri.cost_price*ri.recv_quantity*(1 - ri.discount/100)) as cost
+                FROM recv_items as ri
+                INNER JOIN recv as r ON  ri.recv_id=r.recv_id
+				INNER JOIN (SELECT distinct(it.item_kit_id), it.item_number, it.name, i.supplier_id FROM item_kits as it 
+							JOIN item_kit_items as iti ON it.item_kit_id=iti.item_kit_id
+							JOIN items as i ON iti.item_id=i.item_id) AS itk ON ri.item_id=itk.item_kit_id
+                GROUP BY r.recv_id, ri.item_id, ri.line';
 	$this->db->query($query);
 	$this->db->execute();
 }

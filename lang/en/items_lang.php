@@ -1,5 +1,4 @@
 <?php 
-
 $lang["items_add_minus"] = "Inventory to add/subtract";
 $lang["items_allow_alt_description"] = "Allow Alt Description";
 $lang["items_amazon"] = "Amazon";
@@ -95,4 +94,7 @@ $lang["items_err_get"] = "Error to get item infomation, please check it was not 
 $lang["items_err_save"] = "Error adding item";
 $lang["items_err_update"] = "Error updating item";
 $lang["items_err_g_barcode"] = "Error generate barcode";
+$lang["items_serialnumber"] = "Serial Number";
+$lang["items_norm"] = "Norm";
+$lang["items_discount_required"] = "Please input discount";
 ?>

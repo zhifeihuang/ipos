@@ -21,8 +21,8 @@
 				</div>
 			</div>
 		</div>
-
-	<div class="form-group form-group-sm">
+		
+		<div class="form-group form-group-sm">
 			<label class="control-label col-xs-3" for="cost_price">{$lang['items_cost_price']}({$config['currency_symbol']})</label>			<div class="col-xs-4">
 				<div class="input-group input-group-sm">
 					<input name="cost_price" class="form-control input-sm" id="cost_price" type="text" value="">
@@ -71,26 +71,6 @@
 		<div class="form-group form-group-sm">	
 			<label class="control-label col-xs-3" for="description">{$lang['items_description']}</label>			<div class="col-xs-5">
 				<textarea name="description" class="form-control input-sm" id="description" rows="3" cols="40"></textarea>
-			</div>
-		</div>
-
-		<div class="form-group form-group-sm">
-			<label class="control-label col-xs-3" for="allow_alt_description">{$lang['items_allow_alt_description']}</label>			<div class="col-xs-5">
-				<select name="allow_alt_description" class="form-control">
-				{foreach $allow_alt_description as $k => $v}
-<option value="{$k}">{$v}</option>
-				{/foreach}
-</select>
-			</div>
-		</div>
-
-		<div class="form-group form-group-sm">
-			<label class="control-label col-xs-3" for="is_serialized">{$lang['items_is_serialized']}</label>			<div class="col-xs-5">
-				<select name="is_serialized" class="form-control">
-				{foreach $is_serialized as $k => $v}
-<option value="{$k}">{$v}</option>
-				{/foreach}
-</select>
 			</div>
 		</div>
 	</fieldset>

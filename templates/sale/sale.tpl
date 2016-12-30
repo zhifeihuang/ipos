@@ -10,7 +10,7 @@
 			</li>
 			<li class="pull-left">
 				<label class="control-label sr-only" for="customer">{$lang['sales_customer']}</label>
-				<input class="form-control input-sm ui-autocomplete-input" placeholder="{$lang['sales_customer']}" id="customer" size="20" type="text">
+				<input class="form-control input-sm ui-autocomplete-input" placeholder="{$lang['sales_customer_info']}" id="customer" size="20" type="text">
 				<input name="customer" type="hidden">
 			</li>
 			<li class="pull-right">
@@ -62,12 +62,13 @@ $(document).ready(function() {
 		delay:500,
 		appendTo: '.modal-content',
 		select: function(e, ui) {
-			var data = ui.item.value.split(',');
-			if (!data || data.length != 2)
+			var data = JSON.parse(ui.item.value);
+			if (!data)
 				return false;
 			
-			var id = data[0];
-			var ht = data[1];
+			var id = data['id'];
+			var ht = data['data'];
+			var qy = parseFloat(data['kg']);
 			var input = '#sale_item_' + id;
 			if ($(input).length == 0) {
 				$('#sale_items > tbody').append(ht);
@@ -84,11 +85,16 @@ $(document).ready(function() {
 				});
 				
 				var tr = $(input).closest('tr');
+				var t1 = $('td:eq(1)', tr);
 				var t4 = $('td:eq(4)', tr);
 				$(t4).attr("value", $(t4).text()).text($.number($(t4).text(), {$config['currency_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
-				$(input).number(true, {$config['quantity_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}");
+				if ($(t1).text().length > {$config['kg_barcode']})
+					$(input).number(true, 0, "", "{$config['thousands_separator']}");
+				else
+					$(input).number(true, {$config['kg_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}");
+					
 			} else {
-				$(input).val(parseInt($(input).val()) + 1);
+				$(input).val(parseFloat($(input).val()) + qy);
 			}
 			
 			calc_tr(input);
@@ -156,7 +162,7 @@ $(document).ready(function() {
 				clear();
 			}
         } else if (e.altKey && e.which == 13) {
-				calc()
+				calc();
 		}
     });
 
@@ -256,7 +262,7 @@ function change_ok() {
 
 function calc_tr(input) {
 	var tr = $(input).closest('tr');
-	var q = parseInt($(input).val());
+	var q = parseFloat($(input).val());
 	var u = parseFloat($('td:eq(4)', tr).attr('value'));
 	var t = q * u;
 	$('td:eq(5)', tr).attr('value', t).text($.number(t, {$config['currency_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));

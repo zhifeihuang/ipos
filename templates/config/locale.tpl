@@ -27,11 +27,11 @@
 		</div>
 
 		<div class="form-group form-group-sm">
-			<label class="control-label col-xs-2" for="quantity_decimals">{$lang['config_quantity_decimals']}</label>				<div class="col-xs-2">
-				<select name="quantity_decimals" class="form-control input-sm">
+			<label class="control-label col-xs-2" for="kg_decimals">{$lang['config_kg_decimals']}</label>				<div class="col-xs-2">
+				<select name="kg_decimals" class="form-control input-sm">
 				
-				{foreach $tpl_config['config_quantity_decimals'] as $val}
-					<option value="{$val}" {if ($config['quantity_decimals'] == $val)}selected="selected"{/if}>{$val}</option>
+				{foreach $tpl_config['config_kg_decimals'] as $val}
+					<option value="{$val}" {if ($config['kg_decimals'] == $val)}selected="selected"{/if}>{$val}</option>
 				{/foreach}
 				
 </select>

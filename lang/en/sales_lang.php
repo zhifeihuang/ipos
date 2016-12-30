@@ -5,6 +5,7 @@ $lang["sales_sub_total"] = "Sub Total";
 $lang["sales_total"] = "Total";
 $lang["sales_customer_total"] = "CTotal";
 $lang["sales_customer"] = "CNumber";
+$lang["sales_customer_info"] = "customer number";
 $lang["sales_payment"] = "Payment";
 $lang["sales_more_than"] = "Payment Amount does not cover Total";
 $lang["sales_pay"] = "Pay";

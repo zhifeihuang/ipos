@@ -6,7 +6,10 @@
 	<fieldset>
 		<div class="form-group form-group-sm">
 			<label class="control-label col-xs-3 required" for="item_number">{$lang['items_item_number']}</label>			<div class="col-xs-6">
-				<input name="item_number" class="form-control input-sm" id="item_number" type="text" value="{nocache}{if isset($item['item_number'])}{$item['item_number']}{/if}{/nocache}">
+				<div class="input-group">
+					<span class="input-group-addon input-sm"><span class="glyphicon glyphicon-barcode"></span></span>
+					<input name="item_number" class="form-control input-sm" id="item_number" type="text" {nocache}{if isset($item['item_number'])}value="{$item['item_number']}" readonly{else}value=""{/if}{/nocache}>
+				</div>
 			</div>
 		</div>
 		
@@ -15,11 +18,17 @@
 				<input name="name" class="form-control input-sm" id="name" type="text" value="{nocache}{if isset($item['name'])}{$item['name']}{/if}{/nocache}">
 			</div>
 		</div>
+		
+		<div class="form-group form-group-sm">
+			<label class="control-label col-xs-3" for="discount">{$lang['common_discount']}</label>			<div class="col-xs-6">
+				<input name="discount" class="discount form-control input-sm" id="discount" type="text" value="{nocache}{if isset($item['discount'])}{$item['discount']}{else}0{/if}{/nocache}">
+			</div>
+		</div>
 
 		<div class="form-group form-group-sm">
 			<label class="control-label col-xs-3 required" for="unit_price">{$lang['items_unit_price']}({$config['currency_symbol']})</label>			<div class="col-xs-6">
 			<div class="input-group input-group-sm">
-					<input name="unit_price" class="form-control input-sm number" id="unit_price" type="text" value="{nocache}{if isset($item['unit_price'])}{currency number=$item['unit_price'] thousands_separator=$config['thousands_separator'] decimal_point=$config['decimal_point'] decimals=$config['currency_decimals']}{/if}{/nocache}" readonly>
+					<input name="unit_price" class="form-control input-sm min1" id="unit_price" type="text" value="{nocache}{if isset($item['unit_price'])}{currency number=$item['unit_price'] thousands_separator=$config['thousands_separator'] decimal_point=$config['decimal_point'] decimals=$config['currency_decimals']}{/if}{/nocache}" readonly>
 				</div>
 			</div>
 		</div>
@@ -28,6 +37,14 @@
 			<label class="control-label col-xs-3" for="cost_price">{$lang['items_cost_price']}({$config['currency_symbol']})</label>			<div class="col-xs-6">
 			<div class="input-group input-group-sm">
 					<input name="cost_price" class="form-control input-sm number" id="cost_price" type="text" value="{nocache}{if isset($item['cost_price'])}{currency number=$item['cost_price'] thousands_separator=$config['thousands_separator'] decimal_point=$config['decimal_point'] decimals=$config['currency_decimals']}{/if}{/nocache}" readonly>
+				</div>
+			</div>
+		</div>
+		
+		<div class="form-group form-group-sm">
+			<label class="control-label col-xs-3 required" for="quantity">{$lang['item_kits_quantity']}</label>			<div class="col-xs-6">
+			<div class="input-group input-group-sm">
+					<input name="quantity" class="quantity form-control input-sm" id="quantity" type="text" value="{nocache}{if isset($item['quantity'])}{quantity number=$item['quantity']}{else}0{/if}{/nocache}">
 				</div>
 			</div>
 		</div>
@@ -75,14 +92,31 @@
 //validation and submit handling
 $(document).ready(function() {
 	$.validator.addMethod('quantity' , function(value, element) {
-		return value > 0;
-    }, "{$lang['item_kits_quantity_0']}");
+		return parseInt(value) >= 0;
+    }, "{$lang['item_kits_val_0']}");
+	
+	$.validator.addMethod('min1' , function(value, element) {
+		return parseFloat(value) > 0;
+    }, "{$lang['item_kits_val_1']}");
+	
+	$.validator.addMethod('discount' , function(value, element) {
+		return value >= 0 && value < 100;
+    }, "{$lang['common_discount_val']}");
 	
 	$("input.quantity").blur(function() {
 		calc_cost_price();
 	});
+	$("#discount").blur(function() {
+		var discount = parseInt($("#discount").val());
+		var unit = parseFloat($("#unit_price").val());
+		
+		unit = unit * (1 - discount / 100);
+		$("#unit_price").val(unit);
+	});
 	
-	$("input.quantity").number(true, {$config['quantity_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}");
+	$("#quantity").number(true, 0, "", "{$config['thousands_separator']}");
+	$("#unit_price").number(true, {$config['currency_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}");
+	$("input.quantity").number(true, 0, "", "{$config['thousands_separator']}");
 	$("input.number").number(true, {$config['currency_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}");
 	
 	$("#item_name").autocomplete({
@@ -99,11 +133,11 @@ $(document).ready(function() {
 			var row = data[1];
 			if ($("#kit_item_" + id).length == 0) {
 				$("#item_kit_items > tbody").append(row);
-				$("#kit_item_" + id).rules("add", { quantity: true, messages: { quantity: "{$lang['item_kits_quantity_0']}" } });
+				$("#kit_item_" + id).rules("add", { min1: true, messages: { min1: "{$lang['item_kits_val_1']}" } });
 				$("#kit_item_" + id).blur(function() {
 					calc_cost_price();
 				});
-				$("#kit_item_" + id).number(true, {$config['quantity_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}");
+				$("#kit_item_" + id).number(true, 0, "", "{$config['thousands_separator']}");
 			}
 			$("#item_name").val("");
 			return false;
@@ -140,11 +174,6 @@ $(document).ready(function() {
 						}
 					}
 				}
-			},
-			unit_price:
-			{
-				required:true,
-				number:true
 			}
 		},
 		messages:
@@ -154,11 +183,6 @@ $(document).ready(function() {
 			{
 				required:"{$lang['items_item_number_required']}",
 				remote:"{$lang['items_item_number_duplicate']}"
-			},
-			unit_price:
-			{
-				required:"{$lang['items_unit_price_required']}",
-				number:"{$lang['items_unit_price_number']}"
 			}
 		}
 	}, dialog_support.error));
@@ -178,8 +202,10 @@ function calc_cost_price() {
 		ut += q * u;
 	});
 	
-	$("#cost_price").val(total);
+	var discount = parseInt($("#discount").val());
+	ut = ut * (1 - discount / 100);
 	$("#unit_price").val(ut);
+	$("#cost_price").val(total);
 }
 
 function delete_item_kit_row(link) {

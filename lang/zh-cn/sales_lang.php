@@ -5,6 +5,7 @@ $lang["sales_sub_total"] = "小计";
 $lang["sales_total"] = "总计";
 $lang["sales_customer_total"] = "会员价";
 $lang["sales_customer"] = "会员号";
+$lang["sales_customer_info"] = "会员号";
 $lang["sales_payment"] = "实收";
 $lang["sales_more_than"] = "付款金额不足";
 $lang["sales_pay"] = "付款";

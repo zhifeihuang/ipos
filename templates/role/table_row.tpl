@@ -8,7 +8,7 @@
 <a title="{$lang["config_role_update"]}" class="modal-dlg modal-btn-submit" href="home.php?act=config&f=get_role&id={$r['role']}"><span class="glyphicon glyphicon-edit"></span></a></td>
 </tr>
 {foreachelse}
-<tr><td colspan='6'><div class='alert alert-dismissible alert-info'>{$lang['common_no_persons_to_display']}</div></td>
+<tr><td colspan='6'><div class='alert alert-dismissible alert-info'>{$lang['common_no_data_display']}</div></td>
 </tr>
 {/foreach}
 {/nocache}

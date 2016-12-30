@@ -4,6 +4,7 @@ $lang["recvs_total"] = "总价";
 $lang["recvs_print_after_sale"] = "打印";
 $lang["recvs_quantity"] = "数量";
 $lang["recvs_order_number"] = "订单号";
+$lang["recvs_order_number_title"] = "订单号";
 $lang["recvs_recv_date"] = "日期";
 $lang["recvs_emp"] = "员工";
 $lang["recvs_min_0"] = "数量必须大于等于0";

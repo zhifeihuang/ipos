@@ -8,11 +8,11 @@
 			<label class="required control-label col-xs-3" for="item_number">{$lang['items_item_number']}</label>			<div class="col-xs-6">
 				<div class="input-group">
 					<span class="input-group-addon input-sm"><span class="glyphicon glyphicon-barcode"></span></span>
-					<input name="item_number" class="form-control input-sm" id="item_number" type="text" value="{nocache}{if isset($item['item_number'])}{$item['item_number']}{/if}{/nocache}">
+					<input name="item_number" class="form-control input-sm" id="item_number" type="text" {nocache}{if isset($item['item_number'])}value="{$item['item_number']}" readonly{else}value=""{/if}{/nocache}>
 				</div>
 			</div>
 		</div>
-
+		
 		<div class="form-group form-group-sm">
 			<label class="required control-label col-xs-3" for="name">{$lang['items_name']}</label>			<div class="col-xs-6">
 				<input name="name" class="form-control input-sm" id="name" type="text" value="{nocache}{if isset($item['name'])}{$item['name']}{/if}{/nocache}">
@@ -36,7 +36,7 @@
 				</div>
 			</div>
 		</div>
-
+		
 		<div class="form-group form-group-sm">
 			<label class="required control-label col-xs-3" for="cost_price">{$lang['items_cost_price']}({$config['currency_symbol']})</label>			<div class="col-xs-4">
 				<div class="input-group input-group-sm">
@@ -76,16 +76,10 @@
 				</div>
 			</div>
 		</div>
-{*
-		<div class="form-group form-group-sm">
-			<label class="required control-label col-xs-3" for="quantity">{$lang['items_quantity']}</label>				<div class="col-xs-3">
-				<input name="quantity" class="required quantity form-control" id="quantity" type="text" value="{nocache}{if isset($item['quantity'])}{quantity_decimals number=$item['quantity'] thousands_separator=$config['thousands_separator']}{else}0{/if}{/nocache}">
-			</div>
-		</div>
-*}		
+		
 		<div class="form-group form-group-sm">
 			<label class="required control-label col-xs-3" for="reorder_level">{$lang['items_reorder_level']}</label>			<div class="col-xs-3">
-				<input name="reorder_level" class="form-control input-sm" id="reorder_level" type="text" value="{nocache}{if isset($item['reorder_level'])}{quantity_decimals number=$item['reorder_level'] thousands_separator=$config['thousands_separator']}{else}0{/if}{/nocache}">
+				<input name="reorder_level" class="form-control input-sm" id="reorder_level" type="text" value="{nocache}{if isset($item['reorder_level'])}{quantity number=$item['reorder_level']}{else}0{/if}{/nocache}">
 			</div>
 		</div>
 
@@ -94,25 +88,6 @@
 				<textarea name="description" class="form-control input-sm" id="description" rows="3" cols="40" value="{nocache}{if isset($item['description'])}{$item['description']}{/if}{/nocache}"></textarea>
 			</div>
 		</div>
-{* not support		
-		<div class="form-group form-group-sm">
-			<label class="control-label col-xs-3" for="allow_alt_description">{$lang['items_allow_alt_description']}</label>			<div class="col-xs-1">
-				<input name="allow_alt_description" id="allow_alt_description" type="checkbox" value="1" {nocache}{if !empty($item['allow_alt_description'])}checked="checked"{/if}{/nocache}>
-			</div>
-		</div>
-
-		<div class="form-group form-group-sm">
-			<label class="control-label col-xs-3" for="is_serialized">{$lang['items_is_serialized']}</label>			<div class="col-xs-1">
-				<input name="is_serialized" id="is_serialized" type="checkbox" value="1" {nocache}{if !empty($item['is_serialized'])}checked="checked"{/if}{/nocache}>
-			</div>
-		</div>
-
-		<div class="form-group form-group-sm">
-			<label class="control-label col-xs-3" for="deleted">{$lang['items_is_deleted']}</label>			<div class="col-xs-1">
-				<input name="deleted" id="deleted" type="checkbox" value="1" {nocache}{if !empty($item['deleted'])}checked="checked"{/if}{/nocache}>
-			</div>
-		</div>
-*}
 		<div class="form-group form-group-sm">
 			<input name="pic" id="pic" type="hidden" value="{nocache}{if isset($item['pic'])}{$item['pic']}{/if}{/nocache}" />
 		</div>
@@ -236,7 +211,7 @@ $(document).ready(function()
 						// set action of item_form to url without item id, so a new one can be created
 						$("#item_form").attr("action", "home.php?act=items&f=save");
 						// use a whitelist of fields to minimize unintended side effects
-						$(':text, :password, :file, #description, #item_form').not('#quantity, #reorder_level, #tax_name_1, #tax_percent_1, #tax_name_2, #tax_percent_2, #name, #cost_price, #unit_price').val('');
+						$(':text, :password, :file, #description, #item_form').not('#reorder_level, #tax_name_1, #tax_percent_1, #tax_name_2, #tax_percent_2, #name, #cost_price, #unit_price').val('');
 						// de-select any checkboxes, radios and drop-down menus
 						$(':input', '#item_form').removeAttr('checked').removeAttr('selected');
 					}
@@ -284,11 +259,6 @@ $(document).ready(function()
 				required:true,
 				number:true
 			},
-			quantity:
-			{
-				required:true,
-				number:true
-			},
 			reorder_level:
 			{
 				required:true,
@@ -314,11 +284,6 @@ $(document).ready(function()
 			{
 				required:"{$lang['items_unit_price_required']}",
 				number:"{$lang['items_unit_price_number']}"
-			},
-			quantity:
-			{
-				required:"{$lang['items_quantity_required']}",
-				number:"{$lang['items_quantity_number']}"
 			},
 			reorder_level:
 			{

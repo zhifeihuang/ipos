@@ -2,13 +2,13 @@
 require_once('../libs/secure.php');
 require_once('../libs/item_tax.php');
 require_once('../libs/customer.php');
+require_once('../libs/item_kits.php');
 
 class sale extends secure {
 private $flt_pay = array('total' => FILTER_VALIDATE_FLOAT,
 						'payment' => FILTER_VALIDATE_FLOAT,
 						'suspend' => FILTER_VALIDATE_INT,
 						'type' => FILTER_SANITIZE_SPECIAL_CHARS);
-
 
 public function __construct($db, $grant, $permission) {
 	$this->func_permission = array('view'=>'sales','sale'=>'sales_insert','pay'=>'sales_insert','suspend'=>'sales_insert','suspend_change'=>'sales_insert', 'calc'=>'sales_insert', 'return'=>'sales_delete', 'suggest'=>'sales_delete', 'search'=>'sales_delete');
@@ -39,7 +39,6 @@ public function sale(&$ipos) {
 	}
 	
 	$data = array();
-	$data['sale_date'] = date("Y-m-d H:i:s", $_SERVER['REQUEST_TIME']);
 	$data['emp_id'] = $ipos->session->usrdata('person_id');
 	if ($customer !== null) $data['cm_id'] = $customer;
 	if ($comment !== null) $data['comment'] = $comment;
@@ -62,14 +61,15 @@ public function sale(&$ipos) {
 	$ids = array();
 	$tax = array();
 	$item = array();
+	$item_kit = array();
 	$sale_item = $ipos->session->usrdata('sale_item');
 	$sale_item_kit = $ipos->session->usrdata('sale_item_kit');
 	$sale_item_kit_info = $ipos->session->usrdata('sale_item_kit_info');
 	foreach ($_REQUEST['item'] as $k => $val) {
 		$id = intval($k);
-		$quantity = intval($val);
-		$sum += $quantity;
 		if (isset($sale_item[$id])) {
+			$quantity = $sale_item[$id]['is_kg'] ? floatval($val) : intval($val);
+			$sum += $sale_item[$id]['is_kg'] ?  1 : $quantity;
 			$cost = $sale_item[$id]['cost_price'];
 			$uint = $sale_item[$id]['unit_price'];
 			$cuint = $sale_item[$id]['unit_price'] * (1 - $discount / 100);
@@ -84,8 +84,10 @@ public function sale(&$ipos) {
 			
 			if ($in_arr === false) $ids[] = $id;
 		} else if (isset($sale_item_kit[$id])) {
+			$quantity = intval($val);
+			$sum += $quantity;
 			$info = $sale_item_kit_info[$id];
-			foreach ($info['kit_items'] as $ki) {
+			foreach ($info as $ki) {
 				$in_arr = in_array($ki['item_id'], $ids);
 				if ($tax_included && !empty($ki['tax_name']) && $in_arr === false) {
 					$tmp = explode(item_tax::needle, $ki['tax_name']);
@@ -94,11 +96,12 @@ public function sale(&$ipos) {
 					}
 				}
 				
-				$ttq = $quantity * $ki['quantity'];
-				$item[] = array('item_id'=>$ki['item_id'], 'line'=>$i, 'quantity'=>$ttq, 'cost_price'=>$ki['cost_price'], 'unit_price'=>$ki['unit_price']);
+				$kit_item[] = array('item_id'=>$ki['item_id'], 'quantity'=>$quantity * $ki['quantity']);
 			}
 			
-			$cuint = $uint = $sale_item_kit[$id]['unit_price'];
+			$item[] = array('item_id'=>$id, 'line'=>$i, 'quantity'=>$quantity, 'cost_price'=>$sale_item_kit[$id]['cost_price'], 'unit_price'=>$sale_item_kit[$id]['unit_price']) ;
+			$uint = $sale_item_kit[$id]['unit_price'] / (1- $sale_item_kit[$id]['discount'] / 100);
+			$cuint = $sale_item_kit[$id]['unit_price'];
 			if ($in_arr === false) $ids[] = $ki['item_id'];
 		} else {
 			echo json_encode(array("success" => false, "msg" => $ipos->lang['sales_err']));
@@ -119,6 +122,7 @@ public function sale(&$ipos) {
 	$pay_data['sum'] = $sum;
 	$pay_data['discount'] = $discount;
 	if (!empty($tax)) $pay_data['tax'] = $tax;
+	if (!empty($kit_item)) $pay_data['kit_item'] = $kit_item;
 	
 	$ipos->session->param(array('pay_data'=>$pay_data));
 	$ipos->assign('sale', $pay_data);
@@ -128,8 +132,8 @@ public function sale(&$ipos) {
 public function pay(&$ipos) {
 	$var = filter_var_array($_REQUEST, $this->flt_pay);
 	$pay = $ipos->session->usrdata('pay_data');
-	if ($pay['ttotal'] != $var['total']
-		|| $var['payment'] < $pay['ttotal']
+	if (abs((float)$pay['ttotal'] - (float)$var['total']) > 0.01
+		|| (float)$var['payment'] < (float)$pay['ttotal']
 		|| ($maxid = $this->maxid()) === false) {
 		echo json_encode(array("success" => false, "msg" => $ipos->lang['sales_err_param']));
 		return;
@@ -141,18 +145,24 @@ public function pay(&$ipos) {
 	
 	// item_quantities
 	foreach ($pay['item'] as $v) {
-		if (isset($item[$v['item_id']])) {
-			$itq = $item[$v['item_id']][0] + $v['quantity'];
-			$item[$v['item_id']] =array($itq, $v['item_id']);
-		} else {
 			$ids[] = array($v['item_id']);
 			$item[$v['item_id']] =array($v['quantity'], $v['item_id']);
+	}
+	if (isset($pay['kit_item'])) {
+		foreach ($pay['kit_item'] as $v) {
+			if  (isset($item[$v['item_id']])) {
+				$item[$v['item_id']][0] += $v['quantity'];
+			} else {
+				$ids[] = array($v['item_id']);
+				$item[] = array($v['quantity'], $v['item_id']);
+			}
 		}
 	}
 	
-	
-	$invoice_number = date("Ymd", $_SERVER['REQUEST_TIME']) .'-'. $pay['data']['emp_id'] .'-'. $maxid;
+	$invoice_number = date("YmdHis", $_SERVER['REQUEST_TIME']) .'-'. dechex($pay['data']['emp_id']) .'-'. dechex($maxid);
+	$pay['data']['sale_date'] = date("Y-m-d H:i:s", $_SERVER['REQUEST_TIME']);
 	$pay['data']['invoice_number'] = $invoice_number;
+
 	$this->db->beginTransaction();
 	if ($this->item_update($ids, $item) === false
 		|| $this->save_table('sales', array($pay['data']), $maxid) === false
@@ -164,17 +174,50 @@ public function pay(&$ipos) {
 		return;
 	}
 	$this->db->commit();
-	
+		
 	if ($var['suspend'] > -1 && ($suspend_id = $ipos->session->usrdata('sale_suspend_id')) !== false) {
 		$name = $this->table_name($ipos->session->usrdata('person_id'));
 		$this->db->query('DELETE FROM '. $name .' WHERE id='. $suspend_id);
 		$this->db->execute();
 	}
 	
+	$sale_item = $ipos->session->usrdata('sale_item');
+	$item_kit = $ipos->session->usrdata('sale_item_kit');
+	foreach ($pay['item'] as  &$v) {
+		if (isset($sale_item[$v['item_id']])) {
+			$v['item_number'] = $sale_item[$v['item_id']]['item_number'];
+			$v['name'] = $sale_item[$v['item_id']]['name'];
+			$v['is_kg'] = $sale_item[$v['item_id']]['is_kg'];
+		} else {
+			$v['item_number'] = $item_kit[$v['item_id']]['item_number'];
+			$v['name'] = $item_kit[$v['item_id']]['name'];
+			$v['is_kg'] = $item_kit[$v['item_id']]['is_kg'];
+		}
+	}
+	
 	$pay['payment'] = $var['payment'];
 	$ipos->assign('sale', $pay);
+	$tpl_change = $ipos->fetch('sale/change.tpl');
+	
+	if ($pay['print']) {
+		$ipos->assign('data', $pay['data']);
+		$ipos->assign('items', $pay['item']);
+		$ipos->assign('sum', $pay['sum']);
+		$ipos->assign('total', $pay['ttotal']);
+		$ipos->assign('payment', $var['payment']);
+		
+		$app = require '../config/app_con.php';
+		$config = $ipos->session->usrdata('config');
+		$ipos->language(array('print'));
+		$tpl_print = $ipos->fetch($app['receipt_dir'] .'sale/'. $config['sales_invoice_format']);
+	//	$fname = md5($invoice_number) . '.html';
+	//	file_put_contents($config['print_html_dir']. $fname, $tpl_print);
+	} else {
+		$tpl_print = '';
+	}
+	
 	$ipos->session->del(array('sale_item', 'pay_data', 'sale_item_kit', 'sale_item_kit_info', 'sale_suspend_id'));
-	echo json_encode(array("success" => true, "msg" => $ipos->lang['sales_msg_pay'], "data"=>$ipos->fetch('sale/change.tpl')));
+	echo json_encode(array("success" => true, "msg" => $ipos->lang['sales_msg_pay'], "data"=>$tpl_change, "print"=>$tpl_print));
 }
 
 public function suspend(&$ipos) {
@@ -186,13 +229,12 @@ public function suspend(&$ipos) {
 	$customer = empty($_REQUEST['customer']) ? null : intval($_REQUEST['customer']);
 	$comment = isset($_REQUEST['order_comment']) ? filter_var($_REQUEST['order_comment'], FILTER_SANITIZE_SPECIAL_CHARS) : null;
 	
-	foreach ($_REQUEST['item'] as $k => $val) {
-		$item[intval($k)] = intval($val);
-	}
-	
 	$sale_item = $ipos->session->usrdata('sale_item');
 	$sale_item_kit = $ipos->session->usrdata('sale_item_kit');
 	$sale_item_kit_info = $ipos->session->usrdata('sale_item_kit_info');
+	foreach ($_REQUEST['item'] as $k => $val) {
+		$item[intval($k)] = is_numeric($val) ? $val : floatval($val);
+	}
 	
 	$suspend = array('print'=>$print,'customer'=>$customer,'comment'=>$comment,'item'=>$item,'sale_item'=>$sale_item,'sale_item_kit'=>$sale_item_kit,'sale_item_kit_info'=>$sale_item_kit_info);
 	$name = $this->table_name($ipos->session->usrdata('person_id'));
@@ -295,13 +337,18 @@ public function ret(&$ipos) {
 	
 	$id = intval($_REQUEST['sale_id']);
 	foreach ($_REQUEST['item'] as $k => $v) {
-		$q = intval($v);
+		$q = floatval($v);
 		$tmp = explode('-', $k);
-		if (count($tmp) !== 2) return;
+		if (count($tmp) !== 3 || $q < 0) return;
 		
-		$item[] = array($q, intval($tmp[0]), intval($tmp[1]));
-		$inf[] = array(intval($tmp[0]), intval($tmp[1]));
-		$itemq[] = array($q, intval($tmp[0]));
+		$item_id = intval($tmp[0]);
+		$line = intval($tmp[1]);
+		
+		if (intval($tmp[2]) === 1) $kit[] = array($item_id);
+			
+		$itm[] = array($q, $item_id, $line);
+		$inf[] = array($item_id, $line);
+		$qs[$item_id] = array($q, $item_id);
 	}
 	
 	$this->db->query('SELECT quantity FROM sale_items WHERE item_id=? AND line=? AND sale_id='. $id);
@@ -311,8 +358,8 @@ public function ret(&$ipos) {
 	}
 	
 	$i = 0;
-	foreach ($item as &$v) {
-		if (($v[0] = $result[$i]['quantity'] - $v[0]) < 0) {
+	foreach ($itm as &$val) {
+		if (($val[0] = $result[$i]['quantity'] - $val[0]) < 0) {
 			echo json_encode(array('success'=>false, 'msg'=>$ipos->lang['sales_err_ret']));
 			return;
 		}
@@ -320,9 +367,25 @@ public function ret(&$ipos) {
 		++$i;
 	}
 	
+	if (isset($kit[0])) {
+		if (($result = item_kits::get_info($this->db, $kit)) === false) {
+			echo json_encode(array('success'=>false, 'msg'=>$ipos->lang['sales_err_ret']));
+			return;
+		}
+		
+		foreach ($result as $v) {
+			foreach ($v['kit_items'] as $kt) {
+				if (isset($qs[$kt['item_id']]))
+					$qs[$kt['item_id']][0] += $qs[$v['item']['item_kit_id']][0] * $kt['quantity'];
+				else
+					$qs[$kt['item_id']] = array($qs[$v['item']['item_kit_id']][0] * $kt['quantity'], $kt['item_id']);
+			}
+		}
+	}
+	
 	$this->db->beginTransaction();
 	$this->db->query('UPDATE sale_items SET quantity=? WHERE item_id=? AND line=? AND sale_id='. $id);
-	if ($this->db->update($item) && $this->ret_item($itemq)) {
+	if ($this->db->update($itm) && $this->ret_item($qs)) {
 		$this->db->commit();
 		echo json_encode(array('success'=>true, 'msg'=>$ipos->lang['sales_msg_ret']));
 	} else {
@@ -351,14 +414,33 @@ public function search(&$ipos) {
 	if (!isset($_REQUEST['term']) || empty($var = filter_var($_REQUEST['term'], FILTER_SANITIZE_SPECIAL_CHARS)))
 		return;
 	
+	$data = array();
 	$this->db->query('SELECT si.*, i.item_number as item_number, i.name as name FROM sales as s 
 				JOIN sale_items as si ON s.sale_id=si.sale_id
 				JOIN items as i ON si.item_id=i.item_id
 				WHERE s.invoice_number=? ORDER BY si.line ASC');
-	if (!empty($result = $this->db->select(array(array($var))))) {
-		$id = $result[0]['sale_id'];
-		$ipos->assign('items', $result);
-		echo json_encode(array('success'=>true, 'id'=>$id, 'data'=>$ipos->fetch('sale/return_row.tpl')));
+	if (!empty($item = $this->db->select(array(array($var))))) {
+		foreach ($item as $row) {
+			$row['is_kit'] = 0;
+			$data[$row['line']] = $row;
+		}
+	}
+	
+	$this->db->query('SELECT si.*, it.item_number as item_number, it.name as name FROM sales as s 
+				JOIN sale_items as si ON s.sale_id=si.sale_id
+				JOIN item_kits as it ON si.item_id=it.item_kit_id
+				WHERE s.invoice_number=? ORDER BY si.line ASC');
+	if (!empty($kit = $this->db->select(array(array($var))))) {
+		foreach ($kit as &$row) {
+			$row['is_kit'] = 1;
+			$data[$row['line']] = $row;
+		}
+	}
+	
+	if (isset($data[0])) {
+		ksort($data);
+		$ipos->assign('items', $data);
+		echo json_encode(array('success'=>true, 'id'=>$data[0]['sale_id'], 'data'=>$ipos->fetch('sale/return_row.tpl')));
 	}
 }
 

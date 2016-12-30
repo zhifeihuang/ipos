@@ -7,6 +7,7 @@ $lang["reposts_start_date_required"] = "Please input date";
 $lang["reports_recv_quantity"] = "RQty";
 $lang["reports_sale_subtotal"] = "Sub";
 $lang["reports_emp_info"] = "Please input employee id or name";
+$lang["reports_emp_id"] = "id";
 $lang["reports_date"] = "Date";
 $lang["reports_sale_id"] = "Invoice Number";
 $lang["reports_sale_type"] = "Sale Type";

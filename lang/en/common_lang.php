@@ -28,7 +28,7 @@ $lang["common_learn_about_project"] = "to learn the latest information about the
 $lang["common_list_of"] = "List of";
 $lang["common_logout"] = "Logout";
 $lang["common_new"] = "New";
-$lang["common_no_persons_to_display"] = "There are no people to display";
+$lang["common_no_data_display"] = "There are no data to display";
 $lang["common_or"] = "OR";
 $lang["common_phone_number"] = "Phone Number";
 $lang["common_phone_number_required"] = "";
@@ -78,4 +78,6 @@ $lang["common_none_selected"] = "You have not selected any data to delete";
 $lang["common_file_not_exist"] = "file does not exist";
 $lang["common_no_more_data"] = "Sorry, no more data";
 $lang["common_id"] = "id";
+$lang["common_discount"] = "Discount";
+$lang["common_discount_val"] = "discount value must [0,100)";
 ?>

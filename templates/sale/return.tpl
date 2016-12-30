@@ -70,7 +70,7 @@ $(document).ready(function() {
 			$('#ret_items > tbody > tr').each(function() {
 				var input = $('td:eq(4) input', $(this)).eq(0);
 				input.rules('add', { min_1:true, more:true, messages: { min_1:"{$lang['recvs_min_0']}", mire:"{$lang['sales_ret_q_s']}" } } );
-				input.number(true, {$config['quantity_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}");
+				input.number(true, {$config['kg_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}");
 				input.blur(function() {
 					calc_tr($(this));
 					calc_total();
@@ -79,7 +79,7 @@ $(document).ready(function() {
 				var t5 = $('td:eq(5)', $(this));
 				var t6 = $('td:eq(6)', $(this));
 				var t7 = $('td:eq(7)', $(this));
-				t5.attr('value', t5.text()).text($.number(t5.text(), {$config['quantity_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
+				t5.attr('value', t5.text()).text($.number(t5.text(), {$config['kg_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
 				t6.attr('value', t6.text()).text($.number(t6.text(), {$config['currency_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
 				t7.attr('value', t7.text()).text($.number(t7.text(), {$config['currency_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
 			});
@@ -144,7 +144,7 @@ $(document).ready(function() {
 
 function calc_tr(input) {
 	var tr = input.closest('tr');
-	var q = parseInt(input.val());
+	var q = parseFloat(input.val());
 	var u = parseFloat($('td:eq(6)', tr).attr('value'));
 	var t = q * u;
 	$('td:eq(7)', tr).attr('value', t).text($.number(t, {$config['currency_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));

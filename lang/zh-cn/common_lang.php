@@ -28,7 +28,7 @@ $lang["common_learn_about_project"] = "了解系统开发进度";
 $lang["common_list_of"] = "列表";
 $lang["common_logout"] = "登出";
 $lang["common_new"] = "新建";
-$lang["common_no_persons_to_display"] = "沒有资料可以显示";
+$lang["common_no_data_display"] = "沒有资料可以显示";
 $lang["common_or"] = "或";
 $lang["common_phone_number"] = "电话";
 $lang["common_phone_number_required"] = "";
@@ -78,4 +78,5 @@ $lang["common_none_selected"] = "请选择一项";
 $lang["common_file_not_exist"] = "文件不存在";
 $lang["common_no_more_data"] = "没有更多数据";
 $lang["common_id"] = "工号";
+$lang["common_discount_val"] = "折扣的值应为[0, 100)";
 ?>

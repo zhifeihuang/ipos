@@ -1,4 +1,6 @@
 <?php
+require_once '../libs/item_kits.php';
+
 class recv_item {
 private $db;
 
@@ -6,34 +8,40 @@ public function __construct($db) {
 	$this->db = $db;
 }
 
-public function update($ids, $qs, $id) {
-	if (empty($items = $this->get_info($ids))) return false;
+public function update($kits, $ids, $qs, $id) {
+	if (!empty($ids) && empty($items = $this->get_info($ids))) return false;
 	
-	$tmp = array();
 	$recv = array();
 	$itm = array();
-	$i = 0;
 	foreach ($ids as $v) {
-		$tmp['recv_quantity'] = $qs[$i];
-		$tmp['cost_price'] = $items[$v]['cost_price'];
-		$tmp['discount'] = $items[$v]['cost_discount'];
-		$recv[] = $tmp;
-		$itm[] = array($qs[$i] + $items[$v]['quantity'], $v);
-		++$i;
+		$recv[] = array($qs[$v], $items[$v]['cost_price'], $items[$v]['cost_discount'], $id, $v);
+		$itm[] = array($qs[$v], $v);
 	}
 	
-	if ($this->update_table($recv, $id, $ids) === false
-		|| $this->update_item($itm) === false)
-		return false;
-
-	return true;
+	$kit_itm = array();
+	if (!empty($kits)) {
+		$kit_ids = array();
+		foreach ($kits as $v) {
+			$kit_ids[] = array($v);
+			$kit_itm[] = array($qs[$v], $v);
+		}
+		
+		$items = item_kits::get_info($this->db, $kit_ids);
+		foreach($items as $v) {
+			$itm_kit_id = $v['item']['item_kit_id'];
+			$recv[] = array($qs[$itm_kit_id], $v['item']['cost_price'], 0, $id, $itm_kit_id);
+			foreach($v['kit_items'] as $kt) {
+				$itm[] = array($qs[$itm_kit_id]*$kt['quantity'], $kt['item_id']);
+			}
+		}
+	}
+	
+	return $this->update_table($recv) && $this->update_item($itm, '+') && (empty($kit_itm) || $this->update_item($kit_itm, '*0+'));
 }
 
-public function update_ret($data) {
-	if (($items = $this->get_ret($data)) === false) return false;
-	
-	$this->db->query('UPDATE recv_items SET recv_quantity=? WHERE recv_id=? AND item_id=?');
-	return $this->db->update($items[0]) && $this->update_item($items[1]);
+public function update_ret($data, $itm) {
+	$this->db->query('UPDATE recv_items SET recv_quantity=recv_quantity-? WHERE recv_id=? AND item_id=?');
+	return $this->db->update($data) && $this->update_item($itm, '-');
 }
 
 public function save($data, $id) {
@@ -53,31 +61,22 @@ public function save($data, $id) {
 }
 
 public function delete($data, $id) {
+	$ids = array();
+	foreach ($data as $v) {
+		$ids[] = array($v);
+	}
+	
 	$this->db->query('DELETE FROM recv_items WHERE recv_id='. $id .' AND item_id=?');
-	return $this->db->delete($data);
+	return $this->db->delete($ids);
 }
 
-private function update_table($data, $id, $item_id) {
-	$tmp = array();
-	$i = 0;
-	foreach ($data as $d) {
-		$c = array_values($d);
-		$c[] = $id;
-		$c[] = $item_id[$i++];
-		$tmp[] = $c;
-	}
-	
-	$str = null;
-	foreach ($data[0] as $k => $v) {
-		$str .= $k .'=?,';
-	}
-	
-	$this->db->query('UPDATE recv_items SET '. rtrim($str, ',') .' WHERE recv_id=? AND item_id=?');
-	return $this->db->update($tmp);
+private function update_table($data) {
+	$this->db->query('UPDATE recv_items SET recv_quantity=?,cost_price=?,discount=? WHERE recv_id=? AND item_id=?');
+	return $this->db->update($data);
 }
 
-private function update_item($data) {
-	$this->db->query('UPDATE item_quantities SET quantity=? WHERE item_id=?');
+private function update_item($data, $sign) {
+	$this->db->query('UPDATE item_quantities SET quantity=quantity'. $sign .'? WHERE item_id=?');
 	return $this->db->update($data);
 }
 
@@ -86,9 +85,8 @@ private function get_info($ids) {
 	foreach ($ids as $v) {
 		$data[] = array($v);
 	}
-	$this->db->query('SELECT i.*, iq.quantity as quantity FROM items as i 
+	$this->db->query('SELECT i.* FROM items as i 
 		LEFT JOIN suppliers as s ON s.person_id=i.supplier_id 
-		JOIN item_quantities as iq ON iq.item_id=i.item_id 
 		WHERE s.deleted=0 AND i.deleted=0 AND i.item_id=?');
 	if ($sel = $this->db->select($data)) {
 		$result = array();
@@ -99,53 +97,6 @@ private function get_info($ids) {
 	} else {
 		return false;
 	}
-}
-
-private function get_ret(&$data) {
-	$item = array();
-	$recv = array();
-	$tmp = array();
-	foreach ($data as $k => $v) {
-		foreach ($v as $r) {
-			$tmp[] = array($r[0], $k);
-			$recv[] = array($r[1], $r[0], $k);
-		}
-	}
-	
-	$this->db->query('SELECT ri.*, iq.quantity as quantity FROM recv_items as ri
-		JOIN item_quantities as iq ON iq.item_id=ri.item_id
-		WHERE ri.recv_id=? AND ri.item_id=?');
-	if ($sel = $this->db->select($tmp)) {
-		if (count($sel) !== count($tmp)) return false;
-		
-		$i = 0;
-		$total = 0;
-		$item_id = -1;
-		foreach ($recv as &$v) {
-			if ($item_id !== $v[2]) {
-				if ($item_id !== -1) {
-					if ($total > $sel[$i - 1]['quantity']) return false;
-					
-					$item[] = array($sel[$i - 1]['quantity'] - $total, $item_id);
-				}
-				
-				$total = 0;
-				$item_id = $v[2];
-			}
-			
-			$total += $v[0];
-			$v[0] = $sel[$i]['recv_quantity'] - $v[0];
-			if ($v[0] < 0) return false;
-			
-			++$i;
-		}
-		
-		$item[] = array($sel[$i - 1]['quantity'] - $total, $item_id);
-	} else {
-		return false;
-	}
-	
-	return array($recv, $item);
 }
 }
 ?>

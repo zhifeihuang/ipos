@@ -1,3 +1,6 @@
+create database if not exists ipos;
+use ipos;
+
 create table if not exists login 
 (
 person_id int unsigned not null,
@@ -29,7 +32,7 @@ CREATE TABLE if not exists `employees` (
   KEY (`person_id`)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;
 
-INSERT INTO employees (usrname, password, person_id, deleted, role) VALUES ('test', '$2y$10$nXk5sZVPFfamPMHaawTR3uYsOlWjKQ.chURkTJH9.s.ANS5.4ipXC', '1', '0', 'admin');
+INSERT INTO employees (usrname, password, person_id, deleted, role) VALUES ('test', '$2a$06$9qNZF/ce7SrGMm3/NbUbje4IKOVHUHir4EyyUtWIM8QU2r3XiwBIq', '1', '0', 'admin');
 
 CREATE TABLE  if not exists `modules` (
   `name_lang_key` varchar(255) NOT NULL,
@@ -150,6 +153,9 @@ CREATE TABLE  if not exists `app_config` (
 --
 
 INSERT INTO `app_config` (`k`, `val`) VALUES
+-- app
+('kg_barcode', '5'),
+('print_html_dir', '../docs/html/'),
 -- general
 ('company_logo', ''),
 ('company', 'ipos'),
@@ -171,11 +177,10 @@ INSERT INTO `app_config` (`k`, `val`) VALUES
 ('currency_symbol', '$'),
 ('currency_side', '0'),
 ('currency_decimals', '2'),
-('quantity_decimals', '2'),
+('kg_decimals', '2'),
 ('tax_decimals', '2'),
 ('decimal_point', '.'),
 ('thousands_separator', ','),
--- ('quantity_decimals', '0'),
 ('timezone', 'America/New_York'),
 ('dateformat', 'm/d/Y'),
 ('timeformat', 'H:i:s'),
@@ -246,7 +251,7 @@ CREATE TABLE  if not exists `person` (
 --
 
 INSERT INTO `person` (`first_name`, `last_name`, `gender`, `phone_number`, `email`, `address_1`, `address_2`, `city`, `state`, `zip`, `country`, `comments`, `person_id`) VALUES
-('John', 'Doe', 1, '555-555-5555', 'admin@pappastech.com', 'Address 1', '', '', '', '', '', '', 1);
+('Mr', 'test', 1, '555-555-5555', 'test@test.com', 'Address 1', '', '', '', '', '', '', 0);
 
 -- --------------------------------------------------------
 
@@ -255,7 +260,7 @@ CREATE TABLE  if not exists `customers` (
   `person_id` int(10) NOT NULL,
   `company_name` varchar(255) DEFAULT NULL,
   `account_number` varchar(255) DEFAULT NULL,
-  `discount` decimal(6,3) NOT NULL DEFAULT '0',
+  `discount` int(3) NOT NULL DEFAULT '0',
   `taxable` int(1) NOT NULL DEFAULT '1',
   `deleted` int(1) NOT NULL DEFAULT '0',
   UNIQUE KEY (`account_number`),
@@ -278,6 +283,12 @@ CREATE TABLE  if not exists `suppliers` (
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;
 
 -- --------------------------------------------------------
+--
+-- Dumping data for table `suppliers`
+--
+
+INSERT INTO `suppliers` (`person_id`, `company_name`, `agency_name`, `account_number`, `deleted`) VALUES
+(1, 'self', '', '', 0);
 
 --
 -- Table structure for table `items`
@@ -287,19 +298,17 @@ CREATE TABLE  if not exists `items` (
   `item_id` int(10) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `category` varchar(255) NOT NULL,
-  `supplier_id` int(10) DEFAULT NULL,
-  `item_number` varchar(255) DEFAULT NULL,
-  `description` varchar(255) DEFAULT NULL,
-  `cost_price` decimal(15,2) NOT NULL,
-  `unit_price` decimal(15,2) NOT NULL,
-  `cost_discount` decimal(6,3) NOT NULL DEFAULT '0',
-  `sale_discount` decimal(6,3) NOT NULL DEFAULT '0',
+  `supplier_id` int(10) NOT NULL DEFAULT '1',
+  `item_number` varchar(18) NOT NULL,
+  `cost_price` decimal(10,2) NOT NULL,
+  `unit_price` decimal(10,2) NOT NULL,
+  `cost_discount` int(3) NOT NULL DEFAULT '0',
+  `sale_discount` int(3) NOT NULL DEFAULT '0',
   `reorder_level` int(10) NOT NULL DEFAULT '0',
   `pic` char(40) DEFAULT NULL,
-  `allow_alt_description` tinyint(1) NOT NULL DEFAULT '0',
-  `is_serialized` tinyint(1) NOT NULL DEFAULT '0',
   `deleted` int(1) NOT NULL DEFAULT '0',
   `tax_name` varchar(255) NOT NULL DEFAULT '',
+  `description` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`item_id`),
   UNIQUE KEY (`item_number`),
   KEY (`supplier_id`)
@@ -322,8 +331,9 @@ CREATE TABLE  if not exists `items_taxes` (
 -- 
 
 CREATE TABLE  if not exists `item_kits` (
-  `item_kit_id` int(10) NOT NULL AUTO_INCREMENT,
-  `item_number` varchar(255) DEFAULT NULL,
+  `item_kit_id` int(10) NOT NULL,
+  `discount` int(3) NOT NULL DEFAULT '0',
+  `item_number` varchar(18) NOT NULL,
   `name` varchar(255) NOT NULL,
   `description` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`item_kit_id`),
@@ -345,7 +355,7 @@ CREATE TABLE  if not exists `item_kit_items` (
 
 CREATE TABLE IF NOT EXISTS `item_quantities` (
   `item_id` int(10) NOT NULL,
-  `quantity` int(10) NOT NULL DEFAULT '0',
+  `quantity` decimal(10,2) NOT NULL DEFAULT '0',
   PRIMARY KEY (`item_id`)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;
 
@@ -371,11 +381,10 @@ CREATE TABLE IF NOT EXISTS `recv_items` (
   `recv_id` int(10) NOT NULL DEFAULT '0',
   `item_id` int(10) NOT NULL DEFAULT '0',
   `line` int(3) NOT NULL,
-  `serialnumber` varchar(30) DEFAULT NULL,
   `order_quantity` int(10) NOT NULL DEFAULT '1',
   `recv_quantity` int(10) NOT NULL DEFAULT '0',
-  `cost_price` decimal(15,2) NOT NULL DEFAULT '0',
-  `discount` decimal(6,3) NOT NULL DEFAULT '0',
+  `cost_price` decimal(10,2) NOT NULL DEFAULT '0',
+  `discount` int(3) NOT NULL DEFAULT '0',
   PRIMARY KEY (`recv_id`,`item_id`),
   KEY `item_id` (`item_id`)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;
@@ -388,7 +397,7 @@ CREATE TABLE IF NOT EXISTS `giftcards` (
   `record_time` datetime NOT NULL,
   `giftcard_id` int(10) NOT NULL AUTO_INCREMENT,
   `giftcard_number` int(10) NOT NULL,
-  `val` decimal(15,2) NOT NULL,
+  `val` decimal(10,2) NOT NULL,
   `deleted` int(1) NOT NULL DEFAULT '0',
   `person_id` int(10) DEFAULT NULL,
   `emp_id` int(10) NOT NULL,
@@ -407,7 +416,7 @@ CREATE TABLE IF NOT EXISTS `sales` (
   `cm_id` int(10) DEFAULT NULL,
   `emp_id` int(10) NOT NULL,
   `comment` text DEFAULT NULL,
-  `invoice_number` varchar(32) DEFAULT NULL,
+  `invoice_number` varchar(32) NOT NULL,
   PRIMARY KEY (`sale_id`),
   KEY `cm_id` (`cm_id`),
   KEY `emp_id` (`emp_id`),
@@ -423,11 +432,10 @@ CREATE TABLE IF NOT EXISTS `sale_items` (
   `sale_id` int(10) NOT NULL DEFAULT '0',
   `item_id` int(10) NOT NULL,
   `description` varchar(30) DEFAULT NULL,
-  `serialnumber` varchar(30) DEFAULT NULL,
   `line` int(3) NOT NULL DEFAULT '0',
-  `quantity` int(10) NOT NULL DEFAULT '0',
-  `cost_price` decimal(15,2) NOT NULL,
-  `unit_price` decimal(15,2) NOT NULL,
+  `quantity` decimal(10,2) NOT NULL DEFAULT '0',
+  `cost_price` decimal(10,2) NOT NULL,
+  `unit_price` decimal(10,2) NOT NULL,
   PRIMARY KEY (`sale_id`,`item_id`,`line`),
   KEY `sale_id` (`sale_id`),
   KEY `item_id` (`item_id`)
@@ -454,7 +462,7 @@ CREATE TABLE IF NOT EXISTS `sale_item_tax` (
 CREATE TABLE IF NOT EXISTS `sale_payments` (
   `sale_id` int(10) NOT NULL,
   `payment_type` varchar(40) NOT NULL,
-  `payment_amount` decimal(15,2) NOT NULL,
+  `payment_amount` decimal(10,2) NOT NULL,
   PRIMARY KEY (`sale_id`,`payment_type`),
   KEY `sale_id` (`sale_id`)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;

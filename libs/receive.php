@@ -2,6 +2,7 @@
 require_once '../libs/secure.php';
 require_once '../libs/employee.php';
 require_once '../libs/recv_item.php';
+require_once '../libs/item_kits.php';
 
 class receive extends secure {
 
@@ -94,21 +95,50 @@ public function get(&$ipos) {
 		LEFT JOIN suppliers as s ON i.supplier_id=s.person_id
 		WHERE recv_person=-1 AND r.recv_id=? ORDER BY line ASC');
 	$total = 0;
+	$data = array();
 	if ($result = $this->db->select(array(array($id)))) {
-		foreach ($result as &$row) {
+		foreach ($result as $row) {
 			$row['total'] = $row['order_quantity'] * $row['cost_price'] * (1 - $row['discount'] / 100);
 			$total += $row['total'];
+			$data[$row['line']] = $row;
 		}
 	}
 	
-	if (isset($result[0])
-		&& ($emp = employee::get_info($this->db, $result[0]['order_person'])) !== false) {
-		$recv['date'] =  $result[0]['recv_date'];
-		$recv['number'] =  $result[0]['invoice_number'];
-		$recv['id'] =  $result[0]['recv_id'];
+	$this->db->query('SELECT r.*, ri.line as line, ri.order_quantity as order_quantity, ri.item_id as item_id FROM recv as r
+		JOIN recv_items as ri ON ri.recv_id=r.recv_id
+		JOIN item_kits as it ON it.item_kit_id=ri.item_id
+		WHERE recv_person=-1 AND r.recv_id=? ORDER BY line ASC');
+	if ($result = $this->db->select(array(array($id)))) {
+		$ids = array();
+		$kit_ids = array();
+		foreach ($result as $row) {
+			$ids[] = $row['item_id'];
+			$kit_ids[] = array($row['item_id']);
+		}
+		
+		$kit = item_kits::get_info($this->db, $kit_ids);
+		$i = 0;
+		foreach ($kit as $v) {
+			$row = $result[$i];
+			$v['item']['discount'] = 0;
+			$row['total'] = $row['order_quantity'] * $v['item']['cost_price'];
+			$total += $row['total'];
+			$data[$row['line']] = array_merge($row, $v['item']);
+			++$i;
+		}
+		
+		$ipos->session->param(array('recive_kit'=>array($id=>$ids)));
+	}
+	ksort($data);
+	
+	if (isset($data[0])
+		&& ($emp = employee::get_info($this->db, $data[0]['order_person'])) !== false) {
+		$recv['date'] =  $data[0]['recv_date'];
+		$recv['number'] =  $data[0]['invoice_number'];
+		$recv['id'] =  $data[0]['recv_id'];
 		$recv['emp'] = $emp[0]['first_name'] .' '. $emp[0]['last_name'];
 		$recv['total'] = $total;
-		$ipos->assign('items', $result);
+		$ipos->assign('items', $data);
 		echo json_encode(array("success" => true, "msg" => $ipos->lang['recvs_msg_get'], "recv"=>$recv, "row"=>$ipos->fetch('receivings/receive_row.tpl')));
 	} else {
 		echo json_encode(array("success" => false, "msg" => $ipos->lang['recvs_err_get']));
@@ -125,26 +155,36 @@ public function recv(&$ipos) {
 	$qs = array();
 	$item_delete = array();
 	foreach ($_REQUEST['item'] as $k => $v) {
+		$id = intval($k);
 		$tmp = intval($v);
 		if ($tmp > 0) {
-			$ids[] = intval($k);
-			$qs[] = $tmp;
+			$ids[] = $id;
+			$qs[$id] = $tmp;
 		}
 		else if ($tmp === 0) {
-			$item_delete[] = $k;
+			$item_delete[] = $id;
 		}
 		else {
 			echo json_encode(array("success" => false, "msg" => $ipos->lang['recvs_err_param']));
 			return;
 		}
 	}
+	
 	$id = intval($_REQUEST['id']);
+	$kit_ids = $ipos->session->usrdata('recive_kit');
+	if (isset($kit_ids[$id])) {
+		$kit_ids = array_diff($kit_ids[$id], $item_delete);
+		$ids = array_diff($ids, $kit_ids);
+	} else {
+		$kit_ids = null;
+	}
+	
 	$data = array('recv_person'=>$ipos->session->usrdata('person_id'));
 	$recv_item = new recv_item($this->db);
 
 	$this->db->beginTransaction();
 	if ((isset($item_delete[0]) && $recv_item->delete($item_delete, $id) === false)
-		|| (isset($ids[0]) && $recv_item->update($ids, $qs, $id) === false)
+		|| $recv_item->update($kit_ids, $ids, $qs, $id) === false
 		|| $this->update_table('recv', $data, $id) === false) {
 		$this->db->rollBack();
 		echo json_encode(array("success" => false, "msg" => $ipos->lang['recvs_err']));
@@ -161,19 +201,45 @@ public function item(&$ipos) {
 		return;
 	}
 	
-	$id = intval($_REQUEST['id']);
-	$this->db->query('SELECT ri.*, r.invoice_number, i.name as name, i.item_number as item_number, iq.quantity as quantity, s.company_name as company_name 
+	$var = filter_var($_REQUEST['id'], FILTER_SANITIZE_SPECIAL_CHARS);
+	$var = explode(',', $_REQUEST['id']);
+	$id = intval($var[0]);
+	$is_kit = empty($var[1]) ? false:true;
+	if ($is_kit) {
+		$this->db->query('SELECT s.company_name as company_name FROM item_kits as it
+					JOIN item_kit_items as iti ON it.item_kit_id=iti.item_kit_id
+					JOIN items as i ON iti.item_id=i.item_id
+					LEFT JOIN suppliers as s ON i.supplier_id=s.person_id
+					WHERE it.item_kit_id='. $id);
+		$company = $this->db->select();
+	}
+	
+	$query = $is_kit ? 'SELECT ri.*, r.invoice_number, it.name as name, it.item_number as item_number, iq.quantity as quantity
+		FROM recv_items as ri
+		JOIN recv as r ON ri.recv_id=r.recv_id
+		JOIN item_kits as it ON ri.item_id=it.item_kit_id
+		JOIN item_quantities as iq ON it.item_kit_id=iq.item_id
+		WHERE r.recv_person!=-1 AND ri.item_id='. $id .' ORDER BY ri.recv_id DESC'
+		: 'SELECT ri.*, r.invoice_number, i.name as name, i.item_number as item_number, iq.quantity as quantity, s.company_name as company_name
 		FROM recv_items as ri
 		JOIN recv as r ON ri.recv_id=r.recv_id
 		JOIN items as i ON ri.item_id=i.item_id
 		JOIN item_quantities as iq ON i.item_id=iq.item_id
 		LEFT JOIN suppliers as s ON i.supplier_id=s.person_id
-		WHERE r.recv_person!=-1 AND ri.item_id='. $id .' ORDER BY ri.recv_id DESC');
+		WHERE r.recv_person!=-1 AND ri.item_id='. $id .' ORDER BY ri.recv_id DESC';
+	$this->db->query($query);
 	if ($sel = $this->db->select()) {
 		$total = 0;
 		$ids = array();
 		$result = array();
-		foreach ($sel as &$row) {
+		foreach ($sel as $row) {
+			if ($is_kit)  {
+				$row['company_name'] = $company[0]['company_name'];
+				$row['is_kit'] = 1;
+			} else {
+				$row['is_kit'] = 0;
+			}
+			
 			$ids[] = $row['recv_id'] .'-'. $row['item_id'];
 			if ($total + $row['recv_quantity'] >= $row['quantity'])  {
 				$row['recv_quantity'] = $row['quantity'] - $total;
@@ -198,20 +264,57 @@ public function ret(&$ipos) {
 		return;
 	}
 	
+	$kit = array();
+	$itm = array();
 	$data = array();
 	foreach ($_REQUEST['item'] as $k => $v) {
 		$tmp = explode('-', $k);
-		if (count($tmp) !== 2) {
+		$q = intval($v);
+		if (count($tmp) !== 3 || $q <= 0) {
 			echo json_encode(array("success" => false, "msg" => $ipos->lang['recvs_err_param']));
 			return;
 		}
-			
-		$data[intval($tmp[1])][] = array(intval($tmp[0]), intval($v));
+		
+		$is_kit = intval($tmp[2]);
+		$item_id = intval($tmp[1]);
+		$data[] = array($q, intval($tmp[0]),  $item_id,  $is_kit);		// quantity recv_id item_id is_kit
+		$itm[] = array($q, $item_id);
+		if ($is_kit === 1) {
+			$kit[] = $item_id;
+		}
+	}
+	
+	if (!empty($kit)) {
+		$kit_ids = array();
+		$kit = array_unique($kit, SORT_NUMERIC);
+		foreach ($kit as $v) {
+			$kit_ids[] = array($v);
+		}
+		
+		if (($items = item_kits::get_info($this->db, $kit_ids)) === false) {
+			echo json_encode(array("success" => false, "msg" => $ipos->lang['recvs_err']));
+			return;
+		}
+	}
+	
+	foreach ($data as &$v) {
+		if ($v[3] !== 0) {
+			foreach ($items as $it) {
+				if ($v[2] == $it['item']['item_kit_id']) {
+					foreach ($it['kit_items'] as $ki) {
+						$itm[] = array($v[0]*$ki['quantity'], $ki['item_id']);
+					}
+					break;
+				}
+			}
+		}
+		
+		unset($v[3]);
 	}
 	
 	$recv_item = new recv_item($this->db);
 	$this->db->beginTransaction();
-	if ($recv_item->update_ret($data)) {
+	if ($recv_item->update_ret($data, $itm)) {
 		$this->db->commit();
 		echo json_encode(array("success" => true, "msg" => $ipos->lang['recvs_msg_ret']));
 	} else {
@@ -250,6 +353,5 @@ private function maxid() {
 	$this->db->query('SELECT MAX(recv_id) FROM recv');
 	return $this->db->max();
 }
-
 }
 ?>

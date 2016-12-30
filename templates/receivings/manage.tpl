@@ -83,7 +83,7 @@ $(document).ready(function() {
 			if ($(row).length == 0) {
 				$("#order_items > tbody").append(ht);
 				$(row).rules("add", { min_1: true, messages: { min_1: "{$lang['recvs_min_1']}" } } );
-				$(row).number(true, {$config['quantity_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}");
+				$(row).number(true, 0, "", "{$config['thousands_separator']}");
 			}
 			$("#item_name").val("");
 			return false;
@@ -182,16 +182,16 @@ $(document).ready(function() {
 					
 					$(input).rules("add", { min_0: true, required: true, messages: { min_0: "{$lang['recvs_min_0']}", required: "{$lang['recvs_quantity_required']}" } } );
 
-					$(input).number(true, {$config['quantity_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}");
+					$(input).number(true, 0, "", "{$config['thousands_separator']}");
 					$(input).val($(input).val());
 					
 					var t3 = $("td:eq(3)", $(this));
 					var t5 = $("td:eq(5)", $(this));
 					var t6 = $("td:eq(6)", $(this));
 					var t7 = $("td:eq(7)", $(this));
-					$(t3).attr("value", $(t3).text()).text($.number($(t3).text(), {$config['quantity_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
+					$(t3).attr("value", $(t3).text()).text($.number($(t3).text(), 0, "", "{$config['thousands_separator']}"));
 					$(t5).attr("value", $(t5).text()).text($.number($(t5).text(), {$config['currency_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
-					$(t6).attr("value", $(t6).text()).text($.number($(t6).text(), {$config['tax_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
+					$(t6).attr("value", $(t6).text()).text($.number($(t6).text(), 0, "", "{$config['thousands_separator']}"));
 					$(t7).attr("value", $(t7).text()).text($.number($(t7).text(), {$config['currency_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
 				});
 				
@@ -289,12 +289,12 @@ $(document).ready(function() {
 					var t7 = $("td:eq(7)", tr);
 					var t8 = $("td:eq(8)", tr);
 					var t9 = $("td:eq(9)", tr);
-					t5.attr("value", t5.text()).text($.number(t5.text(), {$config['quantity_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
+					t5.attr("value", t5.text()).text($.number(t5.text(), 0, "", "{$config['thousands_separator']}"));
 					t7.attr("value", t7.text()).text($.number(t7.text(), {$config['currency_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
 					t8.attr("value", t8.text()).text($.number(t8.text(), {$config['tax_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
 					t9.attr("value", t9.text()).text($.number(t9.text(), {$config['currency_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
 					
-					$("#ret_" + id).number(true, {$config['quantity_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}");
+					$("#ret_" + id).number(true, 0, "", "{$config['thousands_separator']}");
 				}
 			},
 			'json');

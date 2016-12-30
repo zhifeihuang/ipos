@@ -37,6 +37,8 @@ private $table_struct = array('number'=>array('item_number'),
 							'string'=>array('category', 'tax_name', 'company_name', 'name'));
 private $conv = array('c'=>'category','company'=>'company_name','number'=>'item_number','n'=>'item_number','tax'=>'tax_name');
 private $sconv = array();
+private $recv_con = array('name'=>'it.name', 'item_number'=>'it.item_number');
+private $recv_struct = array('number'=>array('item_number'), 'string'=>array('name'));
 
 public function __construct($db, $grant, $permission) {
 	$this->func_permission = array('view'=>'items',
@@ -114,12 +116,14 @@ public function create(&$ipos) {
 }
 
 public function save(&$ipos) {
-	if (($result = $this->filter()) === false) {
+	$result = $this->filter();
+	if ($result === false) {
 		echo json_encode(array("success" => false, "msg" => $ipos->lang[$this->err ? $this->err : 'items_err_save']));
 		return;
 	}
 	
-	if (($id = $this->maxid()) === false) {
+	$id = $this->maxid();
+	if ($id === false) {
 		echo json_encode(array("success" => false, "msg" => $ipos->lang['items_err_save']));
 		return;
 	}
@@ -136,7 +140,7 @@ public function save(&$ipos) {
 	}
 	
 	if ($this->save_table('items', $result['item'], $id) === false
-		|| $this->save_table('item_quantities', array('quantity'=>$result['quantity']), $id) === false) {
+		|| $this->save_table('item_quantities', array('quantity'=>0), $id) === false) {
 		$this->db->rollBack();
 		echo json_encode(array("success" => false, "msg" => $ipos->lang['items_err_save']));
 		return;
@@ -145,7 +149,7 @@ public function save(&$ipos) {
 	$this->db->commit();
 	
 	$result['item']['item_id'] = $id;
-	$result['item']['quantity'] = $result['quantity'];
+	$result['item']['quantity'] = 0;
 	$result['item']['company_name'] = $result['supplier'];
 	
 	$app = require '../config/app_con.php';
@@ -163,6 +167,7 @@ public function update(&$ipos) {
 	}
 	
 	$id = intval($_REQUEST['id']);
+	unset($result['item']['item_number']);
 	
 	$this->db->beginTransaction();
 	if (isset($result['tax'])) {
@@ -174,8 +179,7 @@ public function update(&$ipos) {
 		}
 	}
 	
-	if ($this->update_table('items', $result['item'], $id) === false
-		||$this->update_table('item_quantities', array('quantity'=>$result['quantity']), $id) === false) {
+	if ($this->update_table('items', $result['item'], $id) === false) {
 		$this->db->rollBack();
 		echo json_encode(array("success" => false, "msg" => $ipos->lang['items_err_update']));
 		return;
@@ -183,8 +187,11 @@ public function update(&$ipos) {
 	
 	$this->db->commit();
 	
+	$item = $this->get_info(array($id));
+	
 	$result['item']['item_id'] = $id;
-	$result['item']['quantity'] = $result['quantity'];
+	$result['item']['quantity'] = $item[0]['quantity'];
+	$result['item']['item_number'] = $item[0]['item_number'];
 	$result['item']['company_name'] = $result['supplier'];
 	
 	$app = require '../config/app_con.php';
@@ -333,42 +340,60 @@ public function suggest_tax(&$ipos) {
 public function suggest_order(&$ipos) {
 	if (empty($_REQUEST['term'])) return;
 	
+	$result = array();
 	$var = filter_var($_REQUEST['term'], FILTER_SANITIZE_SPECIAL_CHARS);
-	$this->db->query('SELECT * FROM items as i 
+	$this->db->query('SELECT * FROM items as i
 			LEFT JOIN suppliers as s ON i.supplier_id=s.person_id 
-			JOIN item_quantities as iq ON iq.item_id=i.item_id
 			WHERE i.deleted=0
 			AND (');
 	$this->db->order('ORDER BY i.item_id ASC');
-	if (!empty($sel = $this->db->search_suggestions($var, $this->table_struct, $this->sconv, array($this, 'sugg_conv'), false))) {
-		$result = array();
+	if (!empty($sel = $this->db->search_suggestions($var, $this->recv_struct, $this->conv, array($this, 'conversion'), false))) {
 		foreach ($sel as $v) {
 			$ipos->assign('item', $v);
 			$result[] = array('label'=>$v['name'], 'value'=>$v['item_id'] .','. $ipos->fetch('receivings/order_row.tpl'));
 		}
-		
-		echo json_encode($result);
 	}
+	
+	$this->db->query('SELECT it.*, s.company_name as company_name FROM item_kits as it
+			JOIN item_kit_items as iti ON iti.item_kit_id=it.item_kit_id
+			JOIN items as i ON i.item_id=iti.item_id
+			LEFT JOIN suppliers as s ON i.supplier_id=s.person_id 
+			WHERE (');
+	$this->db->order('ORDER BY it.item_kit_id ASC');
+	if (!empty($sel = $this->db->search_suggestions($var, $this->recv_struct, $this->recv_con, array($this, 'recv_conv'), false))) {
+		foreach ($sel as $v) {
+			$v['item_id'] = $v['item_kit_id'];
+			$ipos->assign('item', $v);
+			$result[] = array('label'=>$v['name'], 'value'=>$v['item_id'] .','. $ipos->fetch('receivings/order_row.tpl'));
+		}
+	}
+	
+	echo json_encode($result);
 }
 
 public function suggest_return() {
 	if (empty($_REQUEST['term'])) return;
 	
+	$result = array();
 	$var = filter_var($_REQUEST['term'], FILTER_SANITIZE_SPECIAL_CHARS);
-	$this->db->query('SELECT * FROM items as i 
-			LEFT JOIN suppliers as s ON i.supplier_id=s.person_id 
-			JOIN item_quantities as iq ON iq.item_id=i.item_id
-			WHERE i.deleted=0
-			AND (');
+	$this->db->query('SELECT * FROM items as i WHERE i.deleted=0 AND (');
 	$this->db->order('ORDER BY i.item_id ASC');
-	if (!empty($sel = $this->db->search_suggestions($var, $this->table_struct, $this->sconv, array($this, 'sugg_conv'), false))) {
-		$result = array();
+	if (!empty($sel = $this->db->search_suggestions($var, $this->recv_struct, $this->conv, array($this, 'conversion'), false))) {
 		foreach ($sel as $v) {
-			$result[] =array('label'=>$v['name'], 'value'=>$v['item_id']);
+			$result[] =array('label'=>$v['name'], 'value'=>$v['item_id'] .',');
 		}
-		
-		echo json_encode($result);
 	}
+	
+	
+	$this->db->query('SELECT * FROM item_kits as it WHERE (');
+	$this->db->order('ORDER BY it.item_kit_id ASC');
+	if (!empty($sel = $this->db->search_suggestions($var, $this->recv_struct, $this->recv_con, array($this, 'recv_conv'), false))) {
+		foreach ($sel as $v) {
+			$result[] =array('label'=>$v['name'], 'value'=>$v['item_kit_id'].',kit');
+		}
+	}
+		
+	echo json_encode($result);
 }
 
 public function suggest_kit(&$ipos) {
@@ -377,8 +402,8 @@ public function suggest_kit(&$ipos) {
 	$var = filter_var_array($_REQUEST, $this->flt_suggest);
 	$label = array('label'=>'name='. $var['term']);
 	$this->db->query('SELECT i.*, s.company_name FROM items as i 
-			LEFT JOIN suppliers as s ON i.supplier_id=s.person_id 
 			JOIN item_quantities as iq ON iq.item_id=i.item_id 
+			LEFT JOIN suppliers as s ON i.supplier_id=s.person_id 
 			WHERE i.deleted=0 AND ');
 	$this->db->order('ORDER BY i.item_id ASC');
 	$offset = empty($var['limit']) ? 0 : $var['limit'];
@@ -396,11 +421,20 @@ public function suggest_kit(&$ipos) {
 public function suggest_sale(&$ipos) {
 	if (empty($_REQUEST['term'])) return;
 	
+	$config = $ipos->session->usrdata('config');
 	$item = $ipos->session->usrdata('sale_item');
 	$item_kit = $ipos->session->usrdata('sale_item_kit');
 	$suggestions = array();
 	
-	$var = filter_var($_REQUEST['term'], FILTER_SANITIZE_SPECIAL_CHARS);
+	$barcode = filter_var($_REQUEST['term'], FILTER_SANITIZE_SPECIAL_CHARS);
+	$var = $barcode;
+	$kg = 1;
+	$barnum = strncmp($barcode, '22', 2) === 0 ? 5:(strncmp($barcode, '23', 2) === 0 ? 4:0);
+	if ($barnum !== 0) {
+		$var = ltrim(substr($barcode, 2, $barnum), '0');
+		$kg = floatval(substr($barcode, 2+$barnum, -3) + '.' + substr($barcode, -3));
+	}
+	
 	$label = is_numeric($var) ? array('label'=>'item_number='. $var) : array('label'=>'name='. $var);
 	$this->db->query('SELECT i.*,iq.quantity as quantity FROM items as i
 			JOIN item_quantities as iq ON iq.item_id=i.item_id 
@@ -408,15 +442,17 @@ public function suggest_sale(&$ipos) {
 	$this->db->order('ORDER BY i.item_id ASC');
 	if (!empty($result = $this->db->search($label, $this->conv, array($this, 'conversion')))) {
 		foreach ($result as $v) {
+			if ($barnum !== 0 && strlen($v['item_number']) > $config['kg_barcode']) continue;
+				
 			$unit = $v['unit_price'] * (1 - $v['sale_discount'] / 100);
 			$cost = $v['cost_price'] * (1 - $v['cost_discount'] / 100);
 			$v['unit_price'] = $unit;
+			$v['cost_price'] = $cost;
+			$v['is_kg'] = ($barnum !== 0);
+			$v['sale_quantity'] = $kg;
 			$item[$v['item_id']] = $v;
-			$item[$v['item_id']]['unit_price'] = $unit;
-			$item[$v['item_id']]['cost_price'] = $cost;
-			$v['sale_quantity'] = 1;
 			$ipos->assign('items', array($v));
-			$suggestions[] = array('label'=>$v['name'] .' '. $v['item_number'] , 'value'=>$v['item_id'] .','. $ipos->fetch('sale/table_row.tpl'));
+			$suggestions[] = array('label'=>$v['name'] .' '. $v['item_number'] , 'value'=>json_encode(array('id'=>$v['item_id'],  'data'=>$ipos->fetch('sale/table_row.tpl'), 'kg'=>$kg)));
 		}
 		
 		$ipos->session->param(array('sale_item'=>$item));
@@ -424,18 +460,18 @@ public function suggest_sale(&$ipos) {
 	
 	$this->db->query('SELECT item_kit_id FROM item_kits WHERE ');
 	$this->db->order('ORDER BY item_kit_id ASC');
-	if (!empty($result = $this->db->search($label, null, null))) {
+	if ($barnum === 0 && !empty($result = $this->db->search($label, null, null))) {
 		if ($kit = item_kits::get_info($this->db, $result)) {
 			$sale_item_kit_info = $ipos->session->usrdata('sale_item_kit_info');
 			foreach ($kit as $v) {
 				$im = $v['item'];
-				$sale_item_kit_info[$im['item_kit_id']] = $v; 
-				$item_kit[$im['item_kit_id']] = $im;
+				$sale_item_kit_info[$im['item_kit_id']] = $v['kit_items'];
 				$im['item_id'] = $im['item_kit_id'];
-				$im['quantity'] = item_kits::cquantity;
+				$im['is_kg'] = false;	// item_kit is not kg.
 				$im['sale_quantity'] = 1;
+				$item_kit[$im['item_kit_id']] = $im;
 				$ipos->assign('items', array($im));
-				$suggestions[] = array('label'=>$im['name'] .' '. $im['item_number'] , 'value'=>$im['item_id'] .','. $ipos->fetch('sale/table_row.tpl'));
+				$suggestions[] = array('label'=>$im['name'] .' '. $im['item_number'] , 'value'=>json_encode(array('id'=>$im['item_id'],  'data'=>$ipos->fetch('sale/table_row.tpl'), 'kg'=>1)));
 			}
 			
 			$ipos->session->param(array('sale_item_kit'=>$item_kit, 'sale_item_kit_info'=>$sale_item_kit_info));
@@ -523,8 +559,8 @@ public function do_excel_import(&$ipos) {
 					'unit_price'	=>	$data[5],
 					'reorder_level'	=>	$data[10],
 					'description'	=>	$data[11],
-					'allow_alt_description'	=>	stripos('1yes', $data[12]) === false ? 0 : 1,
-					'is_serialized'	=>	stripos('1yes', $data[12]) === false ? 0 : 1,
+					'sale_discount'=>	$data[12],
+					'cost_discount'=>	$data[13],
 					'pic'			=> ''
 				);
 				$item_number = $data[0];
@@ -551,7 +587,7 @@ public function do_excel_import(&$ipos) {
 					continue;
 				}
 				
-				$quantity = $data[14] >= 0 ? $data[14] : 0;
+				$quantity = 0;
 				$tax_name = null;
 				//tax 1
 				if(is_numeric($data[7]) && $data[6] != '') {
@@ -599,18 +635,6 @@ public function do_excel_import(&$ipos) {
 }
 
 public function bulk_edit(&$ipos) {
-	$allow_alt_description = array(
-		''=>$ipos->lang['items_do_nothing'], 
-		1 =>$ipos->lang['items_change_all_to_allow_alt_desc'],
-		0 =>$ipos->lang['items_change_all_to_not_allow_allow_desc']);
-			
-	$is_serialized = array(
-		''=>$ipos->lang['items_do_nothing'], 
-		1 =>$ipos->lang['items_change_all_to_serialized'],
-		0 =>$ipos->lang['items_change_all_to_unserialized']);
-		
-	$ipos->assign('is_serialized', $is_serialized);
-	$ipos->assign('allow_alt_description', $allow_alt_description);
 	echo $ipos->fetch('items/bulk.tpl');
 }
 
@@ -623,16 +647,14 @@ public function bulk_update(&$ipos) {
 	}
 	
 	unset($result['item']['name'],$result['item']['pic'],$result['item']['item_number']);
-	if (!isset($_REQUEST['deleted'])) unset($result['item']['deleted']);
-	if ($_REQUEST['allow_alt_description'] == null) unset($result['item']['allow_alt_description']);
 	if ($_REQUEST['category'] == null) unset($result['item']['category']);
 	if ($_REQUEST['cost_price'] == null) unset($result['item']['cost_price']);
 	if ($_REQUEST['description'] == null) unset($result['item']['description']);
 	if ($_REQUEST['reorder_level'] == null) unset($result['item']['reorder_level']);
-	if ($_REQUEST['is_serialized'] == null) unset($result['item']['is_serialized']);
-	if ($_REQUEST['supplier'] == null) unset($result['item']['supplier']);
 	if ($_REQUEST['unit_price'] == null) unset($result['item']['unit_price']);
 	if ($result['item']['tax_name'] == '') unset($result['item']['tax_name']);
+	
+	if (empty($result)) return;
 	
 	$this->db->beginTransaction();
 	if (isset($result['tax'])) {
@@ -652,16 +674,6 @@ public function bulk_update(&$ipos) {
 			$this->db->rollBack();
 			echo json_encode(array("success" => false, "msg" => $ipos->lang['items_err_update']));
 			return;
-		}
-	}
-	
-	if (isset($_REQUEST['quantity']) && $_REQUEST['quantity'] != '') {
-		foreach ($ids as $v) {
-			if ($this->update_table('item_quantities', array('quantity'=>$result['quantity']), $v) === false) {
-				$this->db->rollBack();
-				echo json_encode(array("success" => false, "msg" => $ipos->lang['items_err_update']));
-				return;
-			}
 		}
 	}
 	$this->db->commit();
@@ -725,8 +737,9 @@ private function get_info($ids) {
 		$data[] = array($v);
 	}
 	$this->db->query('SELECT * FROM items as i 
+		JOIN item_quantities as iq ON iq.item_id=i.item_id 
 		LEFT JOIN suppliers as s ON s.person_id=i.supplier_id 
-		JOIN item_quantities as iq ON iq.item_id=i.item_id WHERE i.item_id=?');
+		WHERE i.item_id=?');
 	return $this->db->select($data);
 }
 
@@ -742,17 +755,11 @@ private function filter() {
 		$var['supplier_id'] = $result[0]['person_id'];
 		unset($result);
 	} else {
-		$var['supplier_id'] = null;
+		$var['supplier_id'] = 1;
 	}
 	$result['supplier'] = $var['supplier'];
 	unset($var['supplier']);
 	
-/*	$var['deleted'] = isset($_REQUEST['deleted']) ? intval($_REQUEST['deleted']) : 0;
-	$var['is_serialized'] = isset($_REQUEST['is_serialized']) ? intval($_REQUEST['is_serialized']) : 0;
-	$var['allow_alt_description'] = isset($_REQUEST['allow_alt_description']) ? intval($_REQUEST['allow_alt_description']) : 0;
-*/
-	$quantity = isset($_REQUEST['quantity']) ? intval($_REQUEST['quantity']) : 0;
-	$quantity = $quantity < 0 ? 0 : $quantity;
 	$tax_name = null;
 	$tax = array();
 	for ($i = 0; $i < count($_REQUEST['tax_names']); ++$i) {
@@ -766,7 +773,6 @@ private function filter() {
 	}
 	
 	$result['item'] = $var;
-	$result['quantity'] = $quantity;
 	if ($tax_name !== null) {
 		$result['item']['tax_name'] = rtrim($tax_name, item_tax::needle);
 		$result['tax'] = $tax;
@@ -804,17 +810,17 @@ public function save_table($table, $data, $id, $key='item_id') {
 }
 
 public function maxid() {
-	 $this->db->query('SELECT MAX(item_id),MAX(item_kit_id) FROM items,item_kits');
+	 $this->db->query('SELECT MAX(item_id) AS id FROM items UNION SELECT MAX(item_kit_id) AS id FROM item_kits');
 	 $result = $this->db->select();
-	 $item = $result[0]['MAX(item_id)'] !== null ? $result[0]['MAX(item_id)'] : 0;
-	 $kit = $result[0]['MAX(item_kit_id)'] !== null ? $result[0]['MAX(item_kit_id)'] : 0;
+	 $item = $result[0]['id'] !== null ? $result[0]['id'] : 0;
+	 $kit = $result[1]['id'] !== null ? $result[1]['id'] : 0;
 	 return $item > $kit ? $item : $kit;
 }
 
 private function get_all($offset=0, $limit=100) {
 	$this->db->query('SELECT * FROM items as i 
-		LEFT JOIN suppliers as s ON s.person_id=i.supplier_id 
 		JOIN item_quantities as iq ON iq.item_id=i.item_id
+		LEFT JOIN suppliers as s ON s.person_id=i.supplier_id 
 		WHERE i.deleted=0 ORDER BY i.item_id ASC LIMIT '. $offset .','. $limit);
 	return $this->db->select();
 }
@@ -833,6 +839,10 @@ public function sugg_conv(&$key, &$val, $index) {
 		$key[$index] = $this->sconv[$key[$index]];
 	break;
 	}
+}
+
+public function recv_conv(&$key, &$val, $index) {
+		$key[$index] = $this->recv_con[$key[$index]];
 }
 
 private function search_data($var, $offset=0, $limit=100) {

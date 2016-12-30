@@ -13,6 +13,6 @@ return array(
 	'config_backup_db' => '../backup/',
 	'item_pic_dir' => 'items/',
 	'item_thumb_dir' => 'items/thumb/',
-	'receipt_dir' => 'receipt/',
+	'receipt_dir' => '../docs/receipt/',
 );
 ?>
