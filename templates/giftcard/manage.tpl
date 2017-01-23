@@ -1,62 +1,41 @@
 {extends file='header.tpl'}
 {block name='container'}
+<div class="row">
+	<div class="col-xs-2">
+		<ul class="nav nav-tabs nav-stacked">
+{nocache}
+{if !empty($subgrant["giftcards"])}
+			<li class='active'><a data-toggle="tab" onclick="get('find'); return false;">{$lang['giftcards_find']}</a></li>
+{/if}
+{if !empty($subgrant["giftcards_update"])}
+			<li><a data-toggle="tab" onclick="get('charge'); return false;">{$lang['giftcards_charge']}</a></li>
+{/if}
+{if !empty($subgrant["giftcards_insert"])}
+			<li><a data-toggle="tab" onclick="get('create'); return false;">{$lang['giftcards_create']}</a></li>
+{/if}
+{/nocache}
+		</ul>
+	</div>
+	<div class="tab-content col-xs-10" id='giftcard_contain'>
+	{include file='giftcard/find.tpl'}
+	</div>
+</div>
 <script type="text/javascript">
-$(document).ready(function()
-{
-    init_table_sorting();
-    enable_select_all();
-    enable_checkboxes();
-    enable_row_selection();
-    enable_search({ suggest_url: 'home.php?act=giftcards&f=suggest_search',
-		confirm_message: "{$lang['common_confirm_search']}",
-		on_complete:search_more });
-    enable_delete("{$lang['giftcards_confirm_delete']}?","{$lang['common_none_selected']}");
-	
-	more('home.php?act=giftcards&f=more');
-});
+function get(data) {
+	$.post('home.php?act=giftcards', { get:data }, function(response) {
+		if (response.success) {
+			$('#giftcard_contain').empty().append(response.data);
+		} else {
+			set_feedback(response.msg, 'alert alert-dismissible alert-danger', false);
+		}
+	}, 'json');
+}
 
-function init_table_sorting()
-{
-	//Only init if there is more than one row
-	if($('.tablesorter tbody tr').length >1)
-	{
-		$("#sortable_table").tablesorter(
-		{
-			sortList: [[1,0]],
-			headers:
-			{
-				0: { sorter: 'false'},
-				6: { sorter: 'false'}
-			}
-		});
-	}
+function delete_row(link) {
+	var tr = $(link).closest('tr');
+	$('input.form-control', tr).rules('removes');
+	tr.remove();
+	return false;
 }
 </script>
-
-<div id="title_bar">
-{nocache}
-{if !empty($subgrant["giftcards_insert"])}
-	<a title="{$lang['giftcards_new']}" class="modal-dlg modal-btn-submit" href="home.php?act=giftcards&f=create"><div class="btn btn-info btn-sm pull-right"><span>{$lang['giftcards_new']}</span></div></a></div>
-{/if}
-{/nocache}
-<form class="form-horizontal" id="search_form" action="home.php?act=giftcards&f=search" method="post" accept-charset="utf-8">
-	<fieldset>
-		<div class="form-group" id="table_action_header">
-			<ul>
-{nocache}
-{if !empty($subgrant["giftcards_delete"])}
-				<li class="pull-left"><a id="delete" href="home.php?act=giftcards&f=delete"><div class="btn btn-default btn-sm"><span>{$lang['common_delete']}</span></div></a></li>
-{/if}
-{/nocache}
-				<li class="pull-right">
-					<input name="search" class="form-control input-sm ui-autocomplete-input" id="search" type="text" value="">
-					<input id="offset" value="{nocache}{$offset}{/nocache}" data-type="more" data-val="" data-lab="" type="hidden">
-				</li>
-			</ul>
-		</div>
-	</fieldset>
-</form>
-<div id="table_holder">
-{include file='giftcard/table.tpl'}
-</div>
 {/block}

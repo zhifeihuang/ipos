@@ -42,3 +42,87 @@
 		<input class="btn btn-primary btn-sm pull-right" type="submit" value="{$lang['common_submit']}">
 	</fieldset>
 </form>
+<script type="text/javascript">
+$(document).ready(function() {
+	$.validator.addMethod('min_1' , function(value, element) { return value >= 1; }, "{$lang['recvs_min_1']}");
+	
+	$("#order_person").autocomplete({
+		source: 'home.php?act=employees&f=suggest_order',
+		autoFocus: false,
+		delay:500,
+		appendTo: ".modal-content",
+		select: function(e, ui) {
+			var data = ui.item.value.split(/\s+/);
+			if (!data)
+				return false;
+			
+			$("#order_person").val(data[0]);
+			return false;
+		}
+	});
+	
+	$("#item_name").autocomplete({
+		source: 'home.php?act=items&f=suggest_order',
+		autoFocus: false,
+		delay:500,
+		appendTo: ".modal-content",
+		select: function(e, ui) {
+			var data = ui.item.value.split(',');
+			if (!data || data.length != 2)
+				return false;
+			
+			var id = data[0];
+			var ht = data[1];
+			var row = "#order_item_" + id;
+			if ($(row).length == 0) {
+				$("#order_items > tbody").append(ht);
+				$(row).rules("add", { min_1: true, messages: { min_1: "{$lang['recvs_min_1']}" } } );
+				$(row).number(true, 0, "", "{$config['thousands_separator']}");
+			}
+			$("#item_name").val("");
+			return false;
+		}
+	});
+
+    $('#order_form').validate({
+		submitHandler: function(form) {
+			var tr = $("#order_items > tbody > tr");
+			if (tr.length == 0)
+				return false;
+						
+			$(form).ajaxSubmit({
+				success: function(response)	{
+					if(response.success) {
+						$('#order_number').val(response.number);
+						$('#order_form :text, :password, :file').not('#order_number,#order_person').val('');
+						$('#order_items > tbody > tr input').each(function() {
+							$(this).rules('removes');
+						});
+						$('#order_items > tbody').empty();
+						set_feedback(response.msg, 'alert alert-dismissible alert-success', false);		
+					} else {
+						set_feedback(response.msg, 'alert alert-dismissible alert-danger', false);		
+					}
+				},
+				dataType: 'json'
+			});
+		},
+
+		errorClass: "has-error",
+		errorLabelContainer: "#order_error_message_box",
+		wrapper: "li",
+		highlight: function (e)	{
+			$(e).parent().addClass('has-error');
+		},
+		unhighlight: function (e) {
+			$(e).parent().removeClass('has-error');
+		},
+		rules: {
+			order_person: { required: true }
+		},
+		messages: {
+			order_person: { required: "{$lang["recvs_order_person_required"]}" }
+		}
+    });
+});
+</script>

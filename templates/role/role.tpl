@@ -1,15 +1,8 @@
 <ul id="permission_list">
 	<li><input class="module" name="grants[]" type="checkbox" {nocache}{if !empty($role["reports"])}checked="checked"{/if}{/nocache} value="reports"><span class="medium">{$lang["role_reports"]}</span>
 		<ul class="row">
-		<li class="col-xs-2"><input name="grants[]" type="checkbox" {nocache}{if !empty($role["reports_customers"])}checked="checked"{/if}{/nocache} value="reports_customers"><span class="small">{$lang["role_reports_customers"]}</span></li>
-		<li class="col-xs-2"><input name="grants[]" type="checkbox" {nocache}{if !empty($role["reports_receivings"])}checked="checked"{/if}{/nocache} value="reports_receivings"><span class="small">{$lang["role_reports_receivings"]}</span></li>
-		<li class="col-xs-2"><input name="grants[]" type="checkbox" {nocache}{if !empty($role["reports_items"])}checked="checked"{/if}{/nocache} value="reports_items"><span class="small">{$lang["role_reports_items"]}</span></li>
-		<li class="col-xs-2"><input name="grants[]" type="checkbox" {nocache}{if !empty($role["reports_employees"])}checked="checked"{/if}{/nocache} value="reports_employees"><span class="small">{$lang["role_reports_employees"]}</span></li>
+		<li class="col-xs-2"><input name="grants[]" type="checkbox" {nocache}{if !empty($role["reports_giftcard"])}checked="checked"{/if}{/nocache} value="reports_suppliers"><span class="small">{$lang["role_reports_giftcard"]}</span></li>
 		<li class="col-xs-2"><input name="grants[]" type="checkbox" {nocache}{if !empty($role["reports_suppliers"])}checked="checked"{/if}{/nocache} value="reports_suppliers"><span class="small">{$lang["role_reports_suppliers"]}</span></li>
-		<li class="col-xs-2"><input name="grants[]" type="checkbox" {nocache}{if !empty($role["reports_sales"])}checked="checked"{/if}{/nocache} value="reports_sales"><span class="small">{$lang["role_reports_sales"]}</span></li>
-		<li class="col-xs-2"><input name="grants[]" type="checkbox" {nocache}{if !empty($role["reports_discounts"])}checked="checked"{/if}{/nocache} value="reports_discounts"><span class="small">{$lang["role_reports_discounts"]}</span></li>
-		<li class="col-xs-2"><input name="grants[]" type="checkbox" {nocache}{if !empty($role["reports_taxes"])}checked="checked"{/if}{/nocache} value="reports_taxes"><span class="small">{$lang["role_reports_taxes"]}</span></li>
-		<li class="col-xs-2"><input name="grants[]" type="checkbox" {nocache}{if !empty($role["reports_inventory"])}checked="checked"{/if}{/nocache} value="reports_inventory"><span class="small">{$lang["role_reports_inventory"]}</span></li>
 		<li class="col-xs-2"><input name="grants[]" type="checkbox" {nocache}{if !empty($role["reports_categories"])}checked="checked"{/if}{/nocache} value="reports_categories"><span class="small">{$lang["role_reports_categories"]}</span></li>
 		<li class="col-xs-2"><input name="grants[]" type="checkbox" {nocache}{if !empty($role["reports_payments"])}checked="checked"{/if}{/nocache} value="reports_payments"><span class="small">{$lang["role_reports_payments"]}</span></li></ul></li>
 

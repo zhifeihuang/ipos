@@ -16,9 +16,7 @@
 		<form action="index.php?act=submit" method="post" accept-charset="UTF-8">
 			<div id="container">
 				<p align="center" class="alert-danger">
-				{nocache}
-				{if isset($err)}{$err}{/if}
-				{/nocache}
+				{nocache}{if isset($err)}{$err}{/if}{/nocache}
 				</p>
 				<div id="login_form">
 					<input class="form-control autofocus" type="text" placeholder="{$lang["usrid"]}" required="required" name="usrid" maxlength="10" {nocache}{if (isset($usrid))}value={$usrid}{/if}{/nocache}>

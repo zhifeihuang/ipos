@@ -1,7 +1,4 @@
 <?php
-/*
- language: English
-*/
 $lang['login_check'] = 'You have many error times.';
 $lang['check_time'] = ' later, you can try again.';
 $lang['auth_err'] = 'password error.';
@@ -15,4 +12,5 @@ $lang['d'] = ' day';
 $lang['h'] = ' hour';
 $lang['m'] = ' minuter';
 $lang['s'] = ' second';
+$lang['relogin'] = 'relogin.';
 ?>

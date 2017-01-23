@@ -1,5 +1,7 @@
+{nocache}
 var start_date = "{$smarty.now|date_format:"Y-m-d":"":"date"}";
 var end_date = "{$smarty.now|date_format:"Y-m-d":"":"date"}";
+{/nocache}
 $("#daterangepicker").daterangepicker({
 	"ranges": {
 		"{$lang['datepicker_today']}": [

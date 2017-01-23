@@ -44,7 +44,7 @@
 </form>
 <script>
 $(document).ready(function() {
-	$.validator.addMethod('min_1' , function(value, element) { return value >= 1; }, "{$lang['recvs_min_1']}");
+	$.validator.addMethod('min_1' , function(value, element) { return parseFloat(value) >= 0.01; }, "{$lang['recvs_min_1']}");
 	
 	$('#customer').autocomplete({
 		source: 'home.php?act=customers&f=suggest_sale',
@@ -61,45 +61,21 @@ $(document).ready(function() {
 		autoFocus: false,
 		delay:500,
 		appendTo: '.modal-content',
-		select: function(e, ui) {
-			var data = JSON.parse(ui.item.value);
-			if (!data)
-				return false;
-			
-			var id = data['id'];
-			var ht = data['data'];
-			var qy = parseFloat(data['kg']);
-			var input = '#sale_item_' + id;
-			if ($(input).length == 0) {
-				$('#sale_items > tbody').append(ht);
-				$(input).rules("add", { min_1: true, messages: { min_1: "{$lang['recvs_min_1']}" } } );
-				$(input).blur(function() {
-					var tr = $(this).closest('tr');
-					var t6 = $('td:eq(6)', tr);
-					if (parseInt($(this).val()) > parseInt(t6.text()))
-						tr.addClass('warning');
-					else
-						tr.removeClass('warning');
-					
-					calc_tr(this);
-				});
-				
-				var tr = $(input).closest('tr');
-				var t1 = $('td:eq(1)', tr);
-				var t4 = $('td:eq(4)', tr);
-				$(t4).attr("value", $(t4).text()).text($.number($(t4).text(), {$config['currency_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
-				if ($(t1).text().length > {$config['kg_barcode']})
-					$(input).number(true, 0, "", "{$config['thousands_separator']}");
-				else
-					$(input).number(true, {$config['kg_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}");
-					
-			} else {
-				$(input).val(parseFloat($(input).val()) + qy);
+		response: function(e, ui) {
+			if (ui.content.length == 1) {
+				var label = ui.content[0]['label'];
+				var barcode = label.slice(label.lastIndexOf(' ') + 1);
+				if (($(this).val().length > 5  && $(this).val().localeCompare(barcode) == 0)
+					|| $(this).val().substr(2, 5).localeCompare(('0000' + barcode).substr(-5)) == 0 
+					|| $(this).val().substr(2, 4).localeCompare(('000' + barcode).substr(-4)) == 0) {
+					var data = ui.content.shift();
+					append_item(data['value']);
+					return false;
+				}
 			}
-			
-			calc_tr(input);
-			$('#item_name').val('');
-			$('#item_name').focus();
+		},
+		select: function(e, ui) {
+			append_item(ui.item.value);
 			return false;
 		}
 	});
@@ -288,5 +264,50 @@ function delete_tr_row(link) {
 	$("input", tr).rules("removes");
 	tr.remove();
 	return false;
+}
+function append_item(value) {
+	var data = JSON.parse(value);
+	if (!data)
+		return false;
+	
+	var id = data['id'];
+	var ht = data['data'];
+	var qy = parseFloat(data['kg']);
+	var input = '#sale_item_' + id;
+	if ($(input).length == 0) {
+		$('#sale_items > tbody').append(ht);
+		$(input).rules("add", { min_1: true, messages: { min_1: "{$lang['recvs_min_1']}" } } );
+		$(input).blur(function() {
+			var tr = $(this).closest('tr');
+			var t6 = $('td:eq(6)', tr);
+			if (parseFloat($(this).val()) > parseFloat(t6.text()))
+				tr.addClass('warning');
+			else
+				tr.removeClass('warning');
+			
+			calc_tr(this);
+		});
+		
+		var tr = $(input).closest('tr');
+		var t1 = $('td:eq(1)', tr);
+		var t4 = $('td:eq(4)', tr);
+		$(t4).attr("value", $(t4).text()).text($.number($(t4).text(), {$config['currency_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}"));
+		if ($(t1).text().length > {$config['kg_barcode']})
+			$(input).number(true, 0, "", "{$config['thousands_separator']}");
+		else
+			$(input).number(true, {$config['kg_decimals']}, "{$config['decimal_point']}", "{$config['thousands_separator']}");
+			
+	} else {
+		$(input).val(parseFloat($(input).val()) + qy);
+	}
+	
+	var tr = $(input).closest('tr');
+	var t6 = $('td:eq(6)', tr);
+	if (parseFloat($(input).val()) > parseFloat(t6.text()))
+		tr.addClass('warning');
+	
+	calc_tr(input);
+	$('#item_name').val('');
+	$('#item_name').focus();
 }
 </script>

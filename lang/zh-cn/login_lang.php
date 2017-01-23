@@ -1,7 +1,4 @@
 <?php
-/*
- language: Chinese
-*/
 $lang['login_check'] = '失败次数过多, ';
 $lang['check_time']	= ' 后, 再登陆';
 $lang['auth_err'] = '密码错误.';
@@ -15,4 +12,5 @@ $lang['d'] = ' 天';
 $lang['h'] = ' 小时';
 $lang['m'] = ' 分';
 $lang['s'] = ' 秒';
+$lang['relogin'] = '重复登陆.';
 ?>

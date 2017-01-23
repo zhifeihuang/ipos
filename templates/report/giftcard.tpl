@@ -1,12 +1,12 @@
 <ul class="error_message_box" id="error_message_box"></ul>
-<form class="form-horizontal" id="supplier_form" action="home.php?act=reports&f=supplier" enctype="multipart/form-data" method="post" accept-charset="utf-8">
+<form class="form-horizontal" id="giftcard_form" action="home.php?act=reports&f=giftcard" enctype="multipart/form-data" method="post" accept-charset="utf-8">
 	<fieldset>
 		<div class="form-group" id="table_action_header">
 			<ul>
 				<li class="pull-right">
-					<label class="control-label sr-only" for="supplier">{$lang['reports_supplier']}</label>
-					<input class="form-control input-sm ui-autocomplete-input" placeholder="{$lang['reports_supplier_info']}" id="supplier" type="text">
-					<input name="supplier" id="supplier_id" type="hidden">
+					<label class="control-label sr-only" for="employee">{$lang['reports_employee']}</label>
+					<input class="form-control input-sm ui-autocomplete-input" placeholder="{$lang['reports_emp_info']}" id="employee" type="text">
+					<input name="employee" id="emp_id" type="hidden">
 				</li>
 				<li class="pull-right">
 					<input name="daterangepicker" class="form-control input-sm pull-right" id="daterangepicker" type="text" value="">
@@ -16,7 +16,7 @@
 			</ul>
 		</div>
 		<div id="table_holder">
-			<table class="tablesorter table table-striped table-hover" id="supp_items">
+			<table class="tablesorter table table-striped table-hover" id="giftcard_items">
 			</table>
 		</div>
 	</fieldset>
@@ -40,38 +40,38 @@ $(document).ready(function() {
 		$('#end_date').val(end_date);
     });
 	
-	$('#supplier').keypress(function(e) {
+	$('#employee').keypress(function(e) {
 		if (e.which == 13) {
 			if (!$('#start_date').val() || !$('#end_date').val())
 				return;
 				
-			$('#supplier_form').trigger('submit');
+			$('#giftcard_form').trigger('submit');
 		}
 	});
 	
-	$("#supplier").autocomplete({
-		source: "home.php?act=suppliers&f=suggest_supplier",
+	$("#employee").autocomplete({
+		source: "home.php?act=employees&f=suggest_pay",
 		delay:500,
 		appendTo: '.modal-content',
 		select: function(a, ui) {
 			$(this).val(ui.item.label);
-			$("#supplier_id").val(ui.item.value);
+			$("#emp_id").val(ui.item.value);
 			
 			if ($('#start_date').val() || $('#end_date').val())
-				$('#supplier_form').trigger('submit');
+				$('#giftcard_form').trigger('submit');
 				
 			return false;
 		}
 	});
 	
-	$('#supplier_form').validate({
+	$('#giftcard_form').validate({
 		submitHandler: function(form) {
 			$(form).ajaxSubmit({
 				success: function(response)	{
 					if(response.success) {
-						$('#supp_items').empty().append(response.data);
-						$('#supplier').val('');
-						$('#supplier_id').val('')
+						$('#giftcard_items').empty().append(response.data);
+						$('#employee').val('');
+						$('#emp_id').val('')
 						set_feedback(response.msg, 'alert alert-dismissible alert-success', false);		
 					}
 					else {

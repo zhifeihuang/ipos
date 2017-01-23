@@ -170,7 +170,7 @@ $(document).ready(function()
 					if(response.success)
 					{
 						$("#pic").val(response.pic);
-						set_feedback(response.msg, 'alert alert-dismissible alert-success', false);		
+						set_feedback(response.msg, 'alert alert-dismissible alert-success', false);
 					}
 					else
 					{

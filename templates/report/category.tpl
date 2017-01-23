@@ -18,7 +18,6 @@
 			</tr>
 		</thead>
 		<tbody>
-		{include file='report/category_row.tpl'}
 		</tbody>
 	</table>
 </div>
@@ -39,7 +38,7 @@ $(document).ready(function() {
 	$('#daterangepicker').on('apply.daterangepicker', function(ev, picker) {
 		$('#start_date').val(start_date);
 		$('#end_date').val(end_date);
-		$.post('home.php?act=reports&f=cate', { start_date:start_date, end_date:end_date }, function(response) {
+		$.post('home.php?act=reports&f=category', { start_date:start_date, end_date:end_date }, function(response) {
 			if (response.success) {
 				$('#cate_items > tbody').empty().append(response.data);
 				format();

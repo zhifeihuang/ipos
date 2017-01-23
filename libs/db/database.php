@@ -216,7 +216,7 @@ public function search_suggestions($search, $tstruct, $conv, $conversion, $sugg=
 		$search_k = array_values($search_k);
 	}
 	
-	$query = $this->query;
+	$query = $this->query .'(';
 	foreach ($search_k as $v) {
 		$query .= ($is_string ? 'LOWER('. $v .')' : $v) . ' LIKE ? OR ';
 	}
@@ -342,7 +342,6 @@ public function search($var, $conv, $conversion, $offset=0, $limit=100) {
 		$search_k = array_values($search_k);
 		$search_v = array_values($search_v);
 	}
-	
 	
 	$query = $this->query;
 	foreach ($search_k as $v) {

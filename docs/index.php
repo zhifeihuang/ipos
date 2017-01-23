@@ -20,10 +20,8 @@ switch($act) {
 case 'submit':
 	$login = new login($ipos->db);
 	$var = $login->filter($_POST, $ipos->lang);
-	if ($var && ($ret = $login->check($var, $ipos->lang, $app_con))) {
-		if ($ipos->session->usrdata('person_id')) {
-			$ipos->session->destory();
-		}
+	if ($var && ($ret = $login->check($var, $ipos, $app_con))) {
+		$login->success($var['usrid'], $ipos->session->id());
 		$ipos->session->param($ret);
 		header('Location: /home.php');
 		exit();

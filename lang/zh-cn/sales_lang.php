@@ -11,7 +11,7 @@ $lang["sales_more_than"] = "付款金额不足";
 $lang["sales_pay"] = "付款";
 $lang["sales_change"] = "找零";
 $lang['sales_payment_title'] = "付款类型";
-$lang['sales_payment_type'] = array('cash'=>'现金','check'=>'支票','credit'=>'刷卡');
+$lang['sales_payment_type'] = array('cash'=>'现金','giftcard'=>'礼金卡','card'=>'银行卡','wx'=>'微信支付','alipay'=>'支付宝支付');
 $lang["sales_msg_sale"] = "保存成功";
 $lang["sales_err_param"] = "参数错误，请检查";
 $lang["sales_err"] = "操作失败";
@@ -29,4 +29,6 @@ $lang["sales_s_quantity"] = "购买数量";
 $lang["sales_ret_q_s"] = "退货数量必须小于等于购买数量";
 $lang["sales_err_ret"] = "操作失败";
 $lang["sales_msg_ret"] = "成功退货";
+$lang['sales_giftcard_search'] = '请输入卡号';
+$lang['sales_not_enough_money'] = '余额不足';
 ?>

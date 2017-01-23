@@ -159,7 +159,7 @@ public function search($table, $var, $tstruct, $offset=0, $limit=100) {
 public function search_suggestions($table, $search, $tstruct, $sugg=true, $offset=0, $limit=25) {
 	$this->db->query('SELECT * FROM '. $table .' as c JOIN person as p ON c.person_id=p.person_id 
 				WHERE c.deleted=0 
-				AND (');
+				AND ');
 	$this->db->order('ORDER BY c.person_id');
 	return $this->db->search_suggestions($search, $tstruct, $this->sconv, array($this, 'sugg_conv'), $sugg, $offset, $limit);
 }

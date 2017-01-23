@@ -10,6 +10,7 @@ require_once('../libs/receive.php');
 require_once('../libs/giftcard.php');
 require_once('../libs/sale.php');
 require_once('../libs/report.php');
+require_once('../libs/login.php');
 
 $ipos = new smarty_ipos;
 if (!$ipos->db) {
@@ -239,13 +240,14 @@ case 'giftcards':
 	if ($gift->has_grant($func)) {
 		switch ($func) {
 		case 'view': $gift->view($ipos); break;
-		case 'more': $gift->more($ipos); break;
-		case 'create': $gift->create($ipos); break;
 		case 'save': $gift->save($ipos); break;
 		case 'delete': $gift->delete($ipos); break;
+		case 'update': $gift->update($ipos); break;
 		case 'check_number': $gift->check_number(); break;
 		case 'search': $gift->search($ipos); break;
 		case 'suggest_search': $gift->suggest_search(); break;
+		case 'suggest_sale': $gift->suggest_sale(); break;
+		case 'suggest_charge': $gift->suggest_charge($ipos); break;
 		default:
 		break;
 		}
@@ -268,6 +270,7 @@ case 'sales':
 		case 'return': $sale->ret($ipos); break;
 		case 'suggest': $sale->suggest(); break;
 		case 'search': $sale->search($ipos); break;
+		case 'qrcode': $sale->qrcode($ipos); break;
 		default:
 		break;
 		}
@@ -276,18 +279,16 @@ case 'sales':
 	}
 break;
 case 'reports':
-	$ipos->language(array('reports', 'calendar', 'date', 'datepicker'));
+	$ipos->language(array('reports', 'giftcards', 'calendar', 'date', 'datepicker'));
 	$report = new report($ipos->db, $grant['grant'], $grant['permission']);
 	$func = isset($_REQUEST['f']) ? $_REQUEST['f'] : 'view';
 	if ($report->has_grant($func)) {
 		switch ($func) {
 		case 'view': $report->view($ipos); break;
-		case 'cate': $report->cate($ipos); break;
 		case 'category': $report->category($ipos); break;
 		case 'supplier': $report->supplier($ipos); break;
 		case 'payment': $report->payment($ipos); break;
-		case 'supp': $report->supp($ipos); break;
-		case 'pay': $report->pay($ipos); break;
+		case 'giftcard': $report->giftcard($ipos); break;
 		default:
 		break;
 		}
@@ -296,13 +297,13 @@ case 'reports':
 	}
 break;
 case 'logout':
-	$ipos->session->destory();
-	break;
+	$login = new login($ipos->db);
+	$login->logout($ipos, $person_id);
+break;
 case 'view':
 default:
 	$ipos->assign('controller_name', '');
 	$ipos->display('header.tpl');
-break;
 break;
 }
 ?>

@@ -1,5 +1,5 @@
 <ul class="error_message_box" id="error_message_box"></ul>
-<form class="form-horizontal" id="pay_form" action="home.php?act=reports&f=pay" enctype="multipart/form-data" method="post" accept-charset="utf-8">
+<form class="form-horizontal" id="pay_form" action="home.php?act=reports&f=payment" enctype="multipart/form-data" method="post" accept-charset="utf-8">
 	<fieldset>
 		<div class="form-group" id="table_action_header">
 			<ul>
@@ -17,7 +17,6 @@
 		</div>
 		<div id="table_holder">
 			<table class="tablesorter table table-striped table-hover" id="pay_items">
-				{include file="report/payment_row.tpl"}
 			</table>
 		</div>
 	</fieldset>

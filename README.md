@@ -1,11 +1,11 @@
 Introduction
 ------------
-This project is copy from ospos(https://github.com/jekkos/opensourcepos). I only rewrit it, use smarty. If this violates copyright, please tell me.  
+This project is copy from ospos(https://github.com/jekkos/opensourcepos). I only rewrit it, use smarty. If this violates copyright, please tell me. 
 
 Notice
 ------------
-1. I haven't add printer. (I don't know how to print, and haven't printer machine. I can't test)
-2. Scaner, I don't know it can work. I haven't machine so haven't test.
+1. nginx.conf is for the example of nginx configure.
+2. ipos_setup.php has some configures.
 
 Installation
 ------------

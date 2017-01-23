@@ -28,12 +28,9 @@ function fun() {
 		param += "filter" + "&val=" + encodeURIComponent($("#textarea").val());
 	break;
 	}
-	post("function.php", param, funback);
-}
-
-function funback() {
-	if (xhttp.readyState == 4) {
-		$("#content").empty().append(xhttp.responseText);
+	
+	$.post("function.php?"+param, function(response) {
+		$("#content").empty().append(response);
 		if (!$("#return")) $("#content").empty();
-	}
+	});
 }

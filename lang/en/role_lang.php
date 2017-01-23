@@ -1,16 +1,9 @@
 <?php
 $lang["role_reports"]="reports";
-$lang["role_reports_customers"]="customers";
-$lang["role_reports_receivings"]="receivings";
-$lang["role_reports_items"]="items";
-$lang["role_reports_employees"]="employees";
 $lang["role_reports_suppliers"]="suppliers";
-$lang["role_reports_sales"]="sales";
-$lang["role_reports_discounts"]="discounts";
-$lang["role_reports_taxes"]="taxes";
-$lang["role_reports_inventory"]="inventory";
 $lang["role_reports_categories"]="categories";
 $lang["role_reports_payments"]="payments";
+$lang["role_reports_giftcard"]="giftcards";
 $lang["role_customers"]="customers";
 $lang["role_customers_delete"]="delete";
 $lang["role_customers_update"]="update";

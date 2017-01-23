@@ -4,9 +4,9 @@
 <form class="form-horizontal" id="giftcard_form" action="home.php?act=giftcards&f={nocache}{if isset($gift['giftcard_id'])}update&id={$gift['giftcard_id']}{else}save{/if}{/nocache}" method="post" accept-charset="utf-8">
 	<fieldset>
 		<div class="form-group form-group-sm">
-			<label class="control-label col-xs-3 required" for="person_name">{$lang['giftcards_person_id']}</label>			<div class="col-xs-6">
+			<label class="control-label col-xs-3" for="person_name">{$lang['giftcards_person_id']}</label>			<div class="col-xs-6">
 				<input class="form-control input-sm ui-autocomplete-input" id="person_name" type="text" value="{nocache}{if isset($gift['person_name'])}{$gift['person_name']}{/if}{/nocache}" {nocache}{if isset($gift['giftcard_id'])}readonly{/if}{/nocache}>
-<input name="person_id" class="sr-only required" id="person_id" type="text" value="{nocache}{if isset($gift['person_id'])}{$gift['person_id']}{/if}{/nocache}">
+<input name="person_id" class="sr-only" id="person_id" type="text" value="{nocache}{if isset($gift['person_id'])}{$gift['person_id']}{/if}{/nocache}">
 			</div>
 		</div>
 
@@ -56,12 +56,8 @@ $(document).ready(function() {
 		},
 		rules:
 		{
-			person_id: {
-				required:true
-			},
 			number: {
 				required:true,
-				number:true,
 				remote: {
 					url: "home.php?act=giftcards&f=check_number",
 					type: "post",
@@ -82,12 +78,8 @@ $(document).ready(function() {
    		},
 		messages:
 		{
-			person_id: {
-				required:"{$lang['giftcards_person_required']}",
-			},
 			number: {
 				required:"{$lang['giftcards_number_required']}",
-				number:"{$lang['giftcards_number']}",
 				remote:"{$lang['giftcards_number_duplicate']}"
 			},
 			value: {

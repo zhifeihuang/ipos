@@ -1,16 +1,9 @@
 <?php
 $lang["role_reports"]="报表";
-$lang["role_reports_customers"]="客户";
-$lang["role_reports_receivings"]="进货";
-$lang["role_reports_items"]="产品";
-$lang["role_reports_employees"]="员工";
 $lang["role_reports_suppliers"]="供应商";
-$lang["role_reports_sales"]="销售";
-$lang["role_reports_discounts"]="折扣";
-$lang["role_reports_taxes"]="税额";
-$lang["role_reports_inventory"]="库存";
 $lang["role_reports_categories"]="类别";
 $lang["role_reports_payments"]="付款";
+$lang["role_reports_giftcard"]="礼金卡";
 $lang["role_customers"]="客户";
 $lang["role_customers_delete"]="删除";
 $lang["role_customers_update"]="更新";

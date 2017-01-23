@@ -29,8 +29,12 @@ public function close() {
 	session_write_close();
 }
 
-public function destory() {
-	// $this->check();
+public function destory($id = '') {
+	if ($id != '') {
+		session_id($id);
+		@session_start();
+	}
+	
 	$_SESSION = array();
 	if (ini_get("session.use_cookies")) {
 		$params = session_get_cookie_params();
@@ -38,6 +42,7 @@ public function destory() {
 			$params['path'], $params['domain'],
 			$params['secure'], $params['httponly']);
 	}
+	
 	session_destroy();
 	session_write_close();
 }
@@ -47,6 +52,28 @@ public function check() {
 		session_write_close();
 		session_name($this->name);
 		@session_start();
+	}
+}
+
+public function id() {
+	return session_id();
+}
+
+private function regenerate_id($prefix) {
+	if (version_compare(phpversion(), '7.1.0', '>=')) {
+		if (session_status() != PHP_SESSION_ACTIVE) {
+			session_start();
+		}
+		
+		$newid = session_create_id($prefix);
+		session_commit();
+		ini_set('session.use_strict_mode', 0);
+		session_id($newid);
+		session_name($this->name);
+		session_start();
+	} else {
+		session_name($this->name);
+		session_regenerate_id();
 	}
 }
 }

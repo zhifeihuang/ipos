@@ -5,13 +5,13 @@
 <form class="form-horizontal" id="supplier_form" action="home.php?act=suppliers&f={nocache}{if isset($person['person_id'])}update&id={$person['person_id']}{else}save{/if}{/nocache}" method="post" accept-charset="utf-8" novalidate="novalidate">
 	<fieldset id="supplier_basic_info">
 		<div class="form-group form-group-sm">
-			<label class="required control-label col-xs-3" aria-required="true" for="company_name">{$lang['suppliers_company_name']}</label>			<div class="col-xs-6">
+			<label class="required control-label col-xs-3" for="company_name">{$lang['suppliers_company_name']}</label>			<div class="col-xs-6">
 				<input name="company_name" class="form-control input-sm" id="company_name_input" type="text" value="{nocache}{if isset($person['company_name'])}{$person['company_name']}{/if}{/nocache}">
 			</div>
 		</div>
 	
 		<div class="form-group form-group-sm">	
-			<label class="required control-label col-xs-3" aria-required="true" for="account_number">{$lang['suppliers_account_number']}</label>	<div class="col-xs-6">
+			<label class="required control-label col-xs-3" for="account_number">{$lang['suppliers_account_number']}</label>	<div class="col-xs-6">
 			<input name="account_number" class="form-control input-sm" id="account_number" type="text" value="{nocache}{if isset($person['account_number'])}{$person['account_number']}{/if}{/nocache}">
 			</div>
 		</div>

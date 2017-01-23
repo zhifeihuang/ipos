@@ -17,6 +17,7 @@ dt datetime not null,
 err_cnt tinyint unsigned not null default '0',
 ok tinyint(1) not null default '0',
 ip varbinary(16) not null default '0',
+session_id varchar(40) not null default '',
 proxy text not null,
 os varchar(20) not null default '',
 PRIMARY KEY (person_id)
@@ -72,53 +73,46 @@ CREATE TABLE  if not exists `permissions` (
 --
 
 INSERT INTO `permissions` (`permission_id`, `num`) VALUES
-('reports', '1'),
-('reports_customers', '2'),
-('reports_receivings', '3'),
-('reports_items', '4'),
-('reports_employees', '5'),
-('reports_suppliers', '6'),
-('reports_sales', '7'),
-('reports_discounts', '8'),
-('reports_taxes', '9'),
-('reports_inventory', '10'),
-('reports_categories', '11'),
-('reports_payments', '12'),
-('customers', '13'),
-('customers_delete', '14'),
-('customers_update', '15'),
-('customers_insert', '16'),
-('employees', '17'),
-('employees_delete', '18'),
-('employees_update', '19'),
-('employees_insert', '20'),
-('giftcards', '21'),
-('giftcards_delete', '22'),
-('giftcards_update', '23'),
-('giftcards_insert', '24'),
-('items', '25'),
-('items_delete', '26'),
-('items_update', '27'),
-('items_insert', '28'),
-('item_kits', '29'),
-('item_kits_delete', '30'),
-('item_kits_update', '31'),
-('item_kits_insert', '32'),
-('receivings', '33'),
-('receivings_delete', '34'),
-('receivings_update', '35'),
-('receivings_insert', '36'),
-('sales', '37'),
-('sales_delete', '38'),
-('sales_update', '39'),
-('sales_insert', '40'),
-('suppliers', '41'),
-('suppliers_delete', '42'),
-('suppliers_update', '43'),
-('suppliers_insert', '44'),
-('config', '45'),
-('stock', '46'),
-('grants', '47');
+('reports', '0'),
+('reports_giftcard', '1'),
+('reports_suppliers', '2'),
+('reports_categories', '3'),
+('reports_payments', '4'),
+('customers', '5'),
+('customers_delete', '6'),
+('customers_update', '7'),
+('customers_insert', '8'),
+('employees', '9'),
+('employees_delete', '10'),
+('employees_update', '11'),
+('employees_insert', '12'),
+('giftcards', '13'),
+('giftcards_delete', '14'),
+('giftcards_update', '15'),
+('giftcards_insert', '16'),
+('items', '17'),
+('items_delete', '18'),
+('items_update', '19'),
+('items_insert', '20'),
+('item_kits', '21'),
+('item_kits_delete', '22'),
+('item_kits_update', '23'),
+('item_kits_insert', '24'),
+('receivings', '25'),
+('receivings_delete', '26'),
+('receivings_update', '27'),
+('receivings_insert', '28'),
+('sales', '29'),
+('sales_delete', '30'),
+('sales_update', '31'),
+('sales_insert', '32'),
+('suppliers', '33'),
+('suppliers_delete', '34'),
+('suppliers_update', '35'),
+('suppliers_insert', '36'),
+('config', '37'),
+('stock', '38'),
+('grants', '39');
 
 
 -- --------------------------------------------------------
@@ -155,7 +149,6 @@ CREATE TABLE  if not exists `app_config` (
 INSERT INTO `app_config` (`k`, `val`) VALUES
 -- app
 ('kg_barcode', '5'),
-('print_html_dir', '../docs/html/'),
 -- general
 ('company_logo', ''),
 ('company', 'ipos'),
@@ -396,15 +389,24 @@ CREATE TABLE IF NOT EXISTS `recv_items` (
 CREATE TABLE IF NOT EXISTS `giftcards` (
   `record_time` datetime NOT NULL,
   `giftcard_id` int(10) NOT NULL AUTO_INCREMENT,
-  `giftcard_number` int(10) NOT NULL,
+  `giftcard_number` char(18) NOT NULL,
   `val` decimal(10,2) NOT NULL,
   `deleted` int(1) NOT NULL DEFAULT '0',
-  `person_id` int(10) DEFAULT NULL,
+  `person_id` int(10) NOT NULL DEFAULT '-1',
   `emp_id` int(10) NOT NULL,
   PRIMARY KEY (`giftcard_id`),
-  UNIQUE KEY `giftcard_number` (`giftcard_number`),
-  KEY `person_id` (`person_id`)
+  UNIQUE KEY `giftcard_number` (`giftcard_number`)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;
+
+CREATE TABLE IF NOT EXISTS `giftcard_charge` (
+  `record_time` datetime NOT NULL,
+  `giftcard_id` int(10) NOT NULL,
+  `val` int(10) NOT NULL,
+  `person_id` int(10) NOT NULL DEFAULT '-1',
+  `emp_id` int(10) NOT NULL,
+  KEY (`giftcard_id`)
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;
+
 
 --
 -- Table structure for table `sales`
@@ -462,6 +464,7 @@ CREATE TABLE IF NOT EXISTS `sale_item_tax` (
 CREATE TABLE IF NOT EXISTS `sale_payments` (
   `sale_id` int(10) NOT NULL,
   `payment_type` varchar(40) NOT NULL,
+  `invoice` varchar(32) NOT NULL DEFAULT '',
   `payment_amount` decimal(10,2) NOT NULL,
   PRIMARY KEY (`sale_id`,`payment_type`),
   KEY `sale_id` (`sale_id`)

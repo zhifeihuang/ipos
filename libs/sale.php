@@ -7,11 +7,13 @@ require_once('../libs/item_kits.php');
 class sale extends secure {
 private $flt_pay = array('total' => FILTER_VALIDATE_FLOAT,
 						'payment' => FILTER_VALIDATE_FLOAT,
+						'cash' => FILTER_VALIDATE_FLOAT,
 						'suspend' => FILTER_VALIDATE_INT,
-						'type' => FILTER_SANITIZE_SPECIAL_CHARS);
+						'type' => FILTER_SANITIZE_SPECIAL_CHARS,
+						'invoice' => FILTER_SANITIZE_SPECIAL_CHARS);
 
 public function __construct($db, $grant, $permission) {
-	$this->func_permission = array('view'=>'sales','sale'=>'sales_insert','pay'=>'sales_insert','suspend'=>'sales_insert','suspend_change'=>'sales_insert', 'calc'=>'sales_insert', 'return'=>'sales_delete', 'suggest'=>'sales_delete', 'search'=>'sales_delete');
+	$this->func_permission = array('view'=>'sales','sale'=>'sales_insert','pay'=>'sales_insert','suspend'=>'sales_insert','suspend_change'=>'sales_insert', 'calc'=>'sales_insert', 'return'=>'sales_delete', 'suggest'=>'sales_delete', 'search'=>'sales_delete', 'qrcode'=>'sales_insert');
 	parent::__construct($db, $grant, $permission);
 }
 
@@ -132,16 +134,32 @@ public function sale(&$ipos) {
 public function pay(&$ipos) {
 	$var = filter_var_array($_REQUEST, $this->flt_pay);
 	$pay = $ipos->session->usrdata('pay_data');
-	if (abs((float)$pay['ttotal'] - (float)$var['total']) > 0.01
-		|| (float)$var['payment'] < (float)$pay['ttotal']
+	if (abs((float)$pay['ttotal'] - $var['total']) > 0.01
+		|| $var['payment'] < (float)$pay['ttotal']
+		|| $var['cash'] < 0
 		|| ($maxid = $this->maxid()) === false) {
 		echo json_encode(array("success" => false, "msg" => $ipos->lang['sales_err_param']));
 		return;
 	}
 	++$maxid;
 	
-	$type['payment_type'] = $var['type'];
-	$type['payment_amount'] = $pay['ttotal'];
+	$type = array();
+	$type[0]['payment_type'] = $var['type'];
+	$type[0]['payment_amount'] = $pay['ttotal'];
+	switch ($var['type']) {
+	case 'giftcard':
+		if ($var['cash'] > 0) {
+			$type[0]['payment_amount'] = $var['payment'] - $var['cash'];
+			$type[1]['payment_type'] = 'cash';
+			$type[1]['payment_amount'] = $pay['ttotal'] - $type[0]['payment_amount'];
+		}
+	break;
+	case 'wx':
+	case 'alipay':
+		$type[0]['invoice'] = $var['invoice'] === null ? '' : $var['invoice'];
+		echo json_encode(array("success" => false, "msg" => $ipos->lang['sales_err_param']));
+		return;
+	}
 	
 	// item_quantities
 	foreach ($pay['item'] as $v) {
@@ -168,7 +186,8 @@ public function pay(&$ipos) {
 		|| $this->save_table('sales', array($pay['data']), $maxid) === false
 		|| $this->save_table('sale_items', $pay['item'], $maxid) === false
 		|| (isset($pay['tax']) && ($this->save_table('sale_item_tax', $pay['tax'], $maxid) === false))
-		|| $this->save_table('sale_payments', array($type), $maxid) === false) {
+		|| $this->save_table('sale_payments', $type, $maxid) === false
+		|| ($var['type'] === 'giftcard' && $this->giftcard($var['payment']-$var['cash'], $var['invoice']) === false)) {
 		$this->db->rollBack();
 		echo json_encode(array("success" => false, "msg" => $ipos->lang['sales_err_pay']));
 		return;
@@ -444,6 +463,19 @@ public function search(&$ipos) {
 	}
 }
 
+public function qrcode(&$ipos) {
+	$var = filter_var_array($_REQUEST, $this->flt_pay);
+	switch ($var['type']) {
+	case 'wx':
+	case 'alipay':
+	break;
+	default:
+	break;
+	}
+	
+	echo json_encode(array("success" => false, "msg" => $ipos->lang['sales_err_param']));
+}
+
 public static function table_name($id) {
 	return 'sale_suspend_'. $id;
 }
@@ -475,6 +507,11 @@ private function item_update($ids, $item) {
 	
 	$this->db->query('UPDATE item_quantities SET quantity=? WHERE item_id=?');
 	return $this->db->update($item);
+}
+
+private function giftcard($val, $id) {
+	$this->db->query('UPDATE giftcards SET val=val-? WHERE giftcard_number=?');
+	return $this->db->update(array(array($val, $id)));
 }
 
 private function maxid() {

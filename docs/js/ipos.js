@@ -1,34 +1,5 @@
-function createXMLHttpRequest() 
-{
-	xml = null;
-	if (window.XMLHttpRequest) {
-		xml = new XMLHttpRequest();
-		if (xml.overrideMimeType)
-			xml.overrideMimeType('text/xml');
-	} else if (window.ActiveXObject) {
-		try {
-			xml = new ActiveXObject("Msxml2.XMLHTTP");
-		} catch (e) {
-			try {
-				xml = new ActiveXObject("Microsoft.XMLHTTP");
-			} catch (e) {
-			}
-		}
-	}
-	return xml;
-}
-
-function post(url, param, callback) 
-{
-	xhttp = createXMLHttpRequest();
-	xhttp.open("post", url, true);
-	xhttp.onreadystatechange = callback;
-	xhttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;");  
-	xhttp.send(param);
-}
-
 function quit() {
-	post("home.php", "act=logout", null);
+	$.post('home.php?act=logout');
 	
 	if (navigator.userAgent.indexOf("MSIE") > 0) {
             if (navigator.userAgent.indexOf("MSIE 6.0") > 0) {
@@ -40,9 +11,7 @@ function quit() {
 		window.location.href = 'about:blank ';
 		//window.history.go(-2);  
 	} else {
-		window.opener = null;
-		window.open('', '_self', '');
-		window.close();
+		window.location.href = 'about:blank ';
 	}
 }
 
@@ -61,4 +30,21 @@ function ipos_set_feedback(text, classname, keep_displayed)
 	{
 		$('#feedback_bar').css('opacity','0');
 	}
+}
+
+function browser_print(data) {
+	//window.open(response.print, '_blank', 'scrollbars=no,menubar=no,toolbar=no,status=no,titlebar=no');
+	if (navigator.userAgent.indexOf("Firefox") > 0) {
+		var print_win = window.open();
+	} else if (navigator.userAgent.indexOf("Chrome") > 0) {
+		var print_win = window.open('', '_blank');
+	} else {
+		var print_win = window.open();
+	}
+	
+	print_win.document.write(data);
+	print_win.document.close();
+	print_win.focus();
+	print_win.print();
+	print_win.close();
 }

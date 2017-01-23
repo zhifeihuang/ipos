@@ -2,16 +2,15 @@
 require_once('../libs/secure.php');
 
 class giftcard extends secure {
-private $flt = array('person_id'=>FILTER_VALIDATE_INT,
-					'number'=>FILTER_VALIDATE_INT,
-					'value'=>FILTER_VALIDATE_FLOAT);
+private $flt = array('number'=>FILTER_SANITIZE_SPECIAL_CHARS,
+					'val'=>FILTER_VALIDATE_INT);
 private $flt_more = array('offset' => FILTER_VALIDATE_INT, 
 						'limit' => FILTER_VALIDATE_INT, 
 						'type' => FILTER_SANITIZE_SPECIAL_CHARS, 
 						'label' => FILTER_SANITIZE_SPECIAL_CHARS, 
 						'value' => FILTER_SANITIZE_SPECIAL_CHARS);
 private $flt_number = array('id'=>FILTER_VALIDATE_INT,
-							'number'=>FILTER_VALIDATE_INT);
+							'number'=>FILTER_SANITIZE_SPECIAL_CHARS);
 
 private $flt_search = array('limit' => FILTER_VALIDATE_INT,
 							'label' => FILTER_SANITIZE_SPECIAL_CHARS,
@@ -27,24 +26,43 @@ private $table_struct = array('number'=>array('giftcard_number'),
 
 public function __construct($db, $grant, $permission) {
 	$this->func_permission = array('view'=>'giftcards',
-									'more'=>'giftcards',
-									'create'=>'giftcards_insert',
 									'save'=>'giftcards_insert',
 									'delete'=>'giftcards_delete',
+									'update'=>'giftcards_update',
 									'check_number'=>'giftcards_insert',
 									'search'=>'giftcards',
-									'suggest_search'=>'giftcards');
+									'suggest_search'=>'giftcards',
+									'suggest_sale'=>'sales_insert',
+									'suggest_charge'=>'giftcards_update',
+									'find'=>'giftcards',
+									'charge'=>'giftcards_update',
+									'create'=>'sales_insert',);
 	parent::__construct($db, $grant, $permission);
 }
 
 public function view(&$ipos) {
-	$result = $this->get_all();
-	$result = $result === false ? array() : $result;
+	if (isset($_REQUEST['get'])) {
+		if (parent::has_grant($_REQUEST['get'])) {
+			switch ($_REQUEST['get']) {
+				case 'find': $tpl = 'giftcard/find.tpl'; break;
+				case 'charge': $tpl = 'giftcard/charge.tpl'; break;
+				case 'create': $tpl = 'giftcard/create.tpl'; break;
+			}
+			
+			if ($tpl)
+				echo json_encode(array("success" => true, "data" => $ipos->fetch($tpl)));
+			else
+				echo json_encode(array("success" => false, "msg" => $ipos->lang['giftcards_err_param']));
+				
+			return;
+		} else {
+			echo json_encode(array("success" => false, "msg" => $ipos->lang['no_access']));
+			return;
+		}
+	}
 	
 	$ipos->assign('controller_name', 'giftcards');
 	$ipos->assign('subgrant', $this->subgrant);
-	$ipos->assign('offset', 100);
-	$ipos->assign('gift', $result);
 	$ipos->display('giftcard/manage.tpl');
 }
 
@@ -78,7 +96,7 @@ public function create(&$ipos) {
 
 public function save(&$ipos) {
 	$var = filter_var_array($_REQUEST, $this->flt);
-	if (in_array(false, $var, true) || ($maxid = $this->maxid()) === false) {
+	if (empty($var['number']) || $var['val'] < 0 || ($maxid = $this->maxid()) === false) {
 		echo json_encode(array("success" => false, "msg" => $ipos->lang['giftcards_err_param']));
 		return;
 	}
@@ -87,8 +105,8 @@ public function save(&$ipos) {
 	$data[] = date("Y-m-d H:i:s", $_SERVER['REQUEST_TIME']);
 	$data[] = ++$maxid;
 	$data[] = $var['number'];
-	$data[] = $var['value'];
-	$data[] = $var['person_id'];
+	$data[] = $var['val'];
+	$data[] = -1;
 	$data[] = $ipos->session->usrdata('person_id');
 	
 	$this->db->beginTransaction();
@@ -100,42 +118,78 @@ public function save(&$ipos) {
 		return;
 	}
 	
-	$this->db->query('SELECT p.first_name as first_name, p.last_name as last_name FROM customers as c
-		JOIN person as p ON p.person_id=c.person_id
-		WHERE c.deleted=0 AND c.person_id=?');
-	if ($person = $this->db->select(array(array($var['person_id'])))) {
-		$this->db->commit();
-		$person[0]['giftcard_id'] = $maxid;
-		$person[0]['val'] = $var['value'];
-		$person[0]['giftcard_number'] = $var['number'];
-		$ipos->assign('gift', $person);
-		echo json_encode(array("success" => true, "msg" => $ipos->lang['giftcards_msg_save'], "id"=>$maxid, "row"=>$ipos->fetch('giftcard/table_row.tpl')));
-	} else {
+	unset($data[2]);
+	$this->db->query('INSERT INTO giftcard_charge (record_time,giftcard_id,val,person_id,emp_id)
+						VALUES(?,?,?,?,?)');
+	if ($this->db->insert(array($data)) === false) {
 		$this->db->rollBack();
 		echo json_encode(array("success" => false, "msg" => $ipos->lang['giftcards_err_save']));
-	}
-}
-
-public function delete(&$ipos) {
-	if (!isset($_REQUEST['ids']) || !is_array($_REQUEST['ids'])) {
-		$ipos->assign('err', $ipos->lang['giftcards_err_param']);
-		echo $ipos->fetch('err_msg.tpl');
 		return;
 	}
 	
-	$ids = array();
-	foreach ($_REQUEST['ids'] as $v)
-		$ids[] = array(intval($v));
+	$this->db->commit();
+	echo json_encode(array("success" => true, "msg" => $ipos->lang['giftcards_msg_save']));
+}
+
+public function delete(&$ipos) {
+	if (!isset($_REQUEST['id']) || !isset($_REQUEST['status'])) {
+		echo json_encode(array("success" => false, "msg" => $ipos->lang['giftcards_err_param']));
+		return;
+	}
+	
+	$id = intval($_REQUEST['id']);
+	$delete = $_REQUEST['status'] === '+' ? 1 : 0;
+	$this->db->query('UPDATE giftcards SET deleted='. $delete .' WHERE giftcard_id='. $id);
+	if ($this->db->execute()) {
+		$this->db->query('SELECT g.*, p.first_name as first_name, p.last_name as last_name FROM giftcards as g
+		LEFT JOIN person as p ON p.person_id=g.person_id 
+		WHERE g.giftcard_id='. $id);
+		$result = $this->db->select();
+		$ipos->assign('gift', $result);
+		$ipos->assign('subgrant', $this->subgrant);
+		echo json_encode(array('success'=>true, 'id'=>$id, 'row'=>$ipos->fetch('giftcard/table_row.tpl')));
+	} else {
+		echo json_encode(array("success"=>false, "msg" => $ipos->lang['giftcards_err_delete']));
+	}
+}
+
+public function update(&$ipos) {
+	if (empty($_REQUEST['giftcard'])) {
+		echo json_encode(array("success" => false, "msg" => $ipos->lang['giftcards_err_param']));
+		return;
+	}
+	
+	$date = date("Y-m-d H:i:s", $_SERVER['REQUEST_TIME']);
+	$emp = $ipos->session->usrdata('person_id');
+	foreach ($_REQUEST['giftcard'] as $k=>$v) {
+		$val = (int)$v;
+		if ($val < 0) {
+			echo json_encode(array("success" => false, "msg" => $ipos->lang['giftcards_err_param']));
+			return;
+		}
+		
+		$data[] = array($val, (int)$k);
+		$cdata[] = array($date, (int)$k, $val, (int)$_REQUEST['person'][$k], $emp);
+	}
 	
 	$this->db->beginTransaction();
-	$this->db->query('UPDATE giftcards SET deleted=1 WHERE giftcard_id=?');
-	if ($this->db->update($ids)) {
-		$this->db->commit();
-		echo json_encode(array("success" => true, "msg" => $ipos->lang['giftcards_msg_delete']));
-	} else {
+	$this->db->query('UPDATE giftcards SET val=val+? WHERE giftcard_id=?');
+	if ($this->db->update($data) === false) {
 		$this->db->rollBack();
-		echo json_encode(array("success" => false, "msg" => $ipos->lang['giftcards_err_delete']));
+		echo json_encode(array("success" => false, "msg" => $ipos->lang['giftcards_err_charge']));
+		return;
 	}
+	
+	$this->db->query('INSERT INTO giftcard_charge (record_time,giftcard_id,val,person_id,emp_id)
+						VALUES(?,?,?,?,?)');
+	if ($this->db->update($cdata) === false) {
+		$this->db->rollBack();
+		echo json_encode(array("success" => false, "msg" => $ipos->lang['giftcards_err_charge']));
+		return;
+	}
+	
+	$this->db->commit();
+	echo json_encode(array("success" => true, "msg" => $ipos->lang['giftcards_msg_charge']));
 }
 
 public function check_number() {
@@ -155,13 +209,24 @@ public function suggest_search() {
 	
 	$var = filter_var($_REQUEST['term'], FILTER_SANITIZE_SPECIAL_CHARS);
 	$this->db->query('SELECT * FROM giftcards as g
-			JOIN customers as c ON c.person_id=g.person_id
-			JOIN person as p ON g.person_id=p.person_id 
-			WHERE c.deleted=0 AND g.deleted=0
-			AND (');
+			LEFT JOIN person as p ON g.person_id=p.person_id 
+			WHERE ');
 	$this->db->order('ORDER BY g.giftcard_id ASC');
 	if (!empty($result = $this->db->search_suggestions($var, $this->table_struct, $this->sconv, array($this, 'sugg_conv'))))
 		echo json_encode($result);
+}
+
+public function suggest_sale() {
+	if (empty($_REQUEST['term'])) return;
+	
+	$var = filter_var($_REQUEST['term'], FILTER_SANITIZE_SPECIAL_CHARS);
+	$this->db->query('SELECT * FROM giftcards WHERE deleted=0 AND giftcard_number=?');
+	$result = $this->db->select(array(array($var)));
+	foreach ($result as $row) {
+		$suggestion[] = array('value'=>$row['giftcard_number'] .' '. $row['val'], 'label'=>$row['giftcard_number']);
+	}
+	
+	if (isset($suggestion[0])) echo json_encode($suggestion);
 }
 
 public function search(&$ipos) {
@@ -175,6 +240,19 @@ public function search(&$ipos) {
 	echo json_encode(array('rows' => $ipos->fetch('giftcard/table_row.tpl'), 'offset' => 100, 'total_rows' => count($result)));
 }
 
+public function suggest_charge(&$ipos) {
+	if (empty($_REQUEST['term'])) return;
+	
+	$var = filter_var($_REQUEST['term'], FILTER_SANITIZE_SPECIAL_CHARS);
+	$this->db->query('SELECT g.*, p.first_name as first_name, p.last_name as last_name FROM giftcards as g
+		LEFT JOIN person as p ON p.person_id=g.person_id 
+		WHERE g.deleted=0 AND g.giftcard_number=?');
+	if ($result = $this->db->select(array(array($var)))) {
+		$ipos->assign('gift', $result);
+		echo json_encode(array(array('value'=>json_encode(array('id'=>$result[0]['giftcard_id'],'rows'=>$ipos->fetch('giftcard/charge_row.tpl'))), 'label'=>$result[0]['giftcard_number'])));
+	}
+}
+
 private function maxid() {
 	$this->db->query('SELECT MAX(giftcard_id) FROM giftcards');
 	return $this->db->max();
@@ -182,9 +260,8 @@ private function maxid() {
 
 private function get_all($offset=0, $limit=100) {
 	$this->db->query('SELECT g.*, p.first_name as first_name, p.last_name as last_name FROM giftcards as g
-		JOIN customers as c ON c.person_id=g.person_id
-		JOIN person as p ON p.person_id=c.person_id
-		WHERE g.deleted=0 AND c.deleted=0 ORDER BY g.giftcard_id ASC LIMIT '. $offset .','. $limit);
+		LEFT JOIN person as p ON g.person_id=p.person_id
+		WHERE g.deleted=0 ORDER BY g.giftcard_id ASC LIMIT '. $offset .','. $limit);
 		
 	return $this->db->select();
 }
@@ -221,18 +298,14 @@ public function sugg_conv(&$key, &$val, $index) {
 
 private function search_data($var, $offset=0, $limit=100) {
 	$this->db->query('SELECT g.*, p.first_name as first_name, p.last_name as last_name FROM giftcards as g
-		JOIN customers as c ON c.person_id=g.person_id
-		JOIN person as p ON g.person_id=p.person_id 
-		WHERE c.deleted=0 AND g.deleted=0
-		AND ');
+		LEFT JOIN person as p ON p.person_id=g.person_id 
+		WHERE ');
 	$this->db->order('ORDER BY g.giftcard_id ASC');
 	$result = $this->db->search($var, $this->conv, array($this, 'conversion'), $offset, $limit);
 	if ($result === -1) {
 		$this->db->query('SELECT * FROM giftcards as g
-			JOIN customers as c ON c.person_id=g.person_id
-			JOIN person as p ON g.person_id=p.person_id 
-			WHERE c.deleted=0 AND g.deleted=0
-			AND (');
+			LEFT JOIN person as p ON p.person_id=g.person_id 
+			WHERE ');
 		$this->db->order('ORDER BY g.giftcard_id ASC');
 		$result = $this->db->search_suggestions($var['label'], $this->table_struct, $this->sconv, array($this, 'sugg_conv'), false, $offset, $limit);
 	}

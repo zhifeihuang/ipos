@@ -19,8 +19,29 @@ public function __construct($db, $grant, $permission) {
 
 public function view(&$ipos) {
 	$ipos->language(array('items'));
-	$ipos->assign('controller_name', 'receivings');
 	$ipos->assign('emp_id', $ipos->session->usrdata('person_id'));
+	
+	if (isset($_REQUEST['get'])) {
+		if (parent::has_grant($_REQUEST['get'])) {
+			switch ($_REQUEST['get']) {
+				case 'order': $tpl = 'receivings/order.tpl'; break;
+				case 'receive': $tpl = 'receivings/receive.tpl'; break;
+				case 'return': $tpl = 'receivings/return.tpl'; break;
+			}
+			
+			if ($tpl)
+				echo json_encode(array("success" => true, "data" => $ipos->fetch($tpl)));
+			else
+				echo json_encode(array("success" => false, "msg" => $ipos->lang['giftcards_err_param']));
+				
+			return;
+		} else {
+			echo json_encode(array("success" => false, "msg" => $ipos->lang['no_access']));
+			return;
+		}
+	}
+
+	$ipos->assign('controller_name', 'receivings');
 	$ipos->assign('subgrant', $this->subgrant);
 	$ipos->display('receivings/manage.tpl');
 }

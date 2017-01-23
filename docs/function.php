@@ -138,7 +138,7 @@ break;
 }
 
 function conver($end) {
-	$con = array('insert'=>'添加','delete'=>'删除','update'=>'更新', 'reports'=>'报表', 'customers'=>'客户', 'employees'=>'员工', 'giftcards'=>'礼金券', 'items'=>'产品', 'item_kits'=>'产品套件', 'receivings'=>'进货', 'sales'=>'销售', 'suppliers'=>'供应商', 'config'=>'系统设置', 'stock'=>'仓库', 'grants'=>'权限', 'items_stock'=>'产品仓库', 'sales_stock'=>'出货仓库', 'receivings_stock'=>'进货仓库', 'discounts'=>'折扣', 'taxes'=>'税额', 'inventory'=>'库存', 'categories'=>'类别', 'payments'=>'付款');
+	$con = array('insert'=>'添加','delete'=>'删除','update'=>'更新', 'reports'=>'报表', 'customers'=>'客户', 'employees'=>'员工', 'giftcard'=>'礼金卡', 'giftcards'=>'礼金卡', 'items'=>'产品', 'item_kits'=>'产品套件', 'receivings'=>'进货', 'sales'=>'销售', 'suppliers'=>'供应商', 'config'=>'系统设置', 'stock'=>'仓库', 'grants'=>'权限', 'items_stock'=>'产品仓库', 'sales_stock'=>'出货仓库', 'receivings_stock'=>'进货仓库', 'discounts'=>'折扣', 'taxes'=>'税额', 'inventory'=>'库存', 'categories'=>'类别', 'payments'=>'付款');
 	return isset($con[$end]) ? $con[$end] : $end;
 }
 

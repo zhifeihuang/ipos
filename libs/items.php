@@ -273,7 +273,7 @@ public function suggest_search() {
 			LEFT JOIN suppliers as s ON i.supplier_id=s.person_id 
 			JOIN item_quantities as iq ON iq.item_id=i.item_id
 			WHERE i.deleted=0
-			AND (');
+			AND ');
 	$this->db->order('ORDER BY i.item_id ASC');
 	if (!empty($result = $this->db->search_suggestions($var, $this->table_struct, $this->sconv, array($this, 'sugg_conv'))))
 		echo json_encode($result);
@@ -345,7 +345,7 @@ public function suggest_order(&$ipos) {
 	$this->db->query('SELECT * FROM items as i
 			LEFT JOIN suppliers as s ON i.supplier_id=s.person_id 
 			WHERE i.deleted=0
-			AND (');
+			AND ');
 	$this->db->order('ORDER BY i.item_id ASC');
 	if (!empty($sel = $this->db->search_suggestions($var, $this->recv_struct, $this->conv, array($this, 'conversion'), false))) {
 		foreach ($sel as $v) {
@@ -358,7 +358,7 @@ public function suggest_order(&$ipos) {
 			JOIN item_kit_items as iti ON iti.item_kit_id=it.item_kit_id
 			JOIN items as i ON i.item_id=iti.item_id
 			LEFT JOIN suppliers as s ON i.supplier_id=s.person_id 
-			WHERE (');
+			WHERE ');
 	$this->db->order('ORDER BY it.item_kit_id ASC');
 	if (!empty($sel = $this->db->search_suggestions($var, $this->recv_struct, $this->recv_con, array($this, 'recv_conv'), false))) {
 		foreach ($sel as $v) {
@@ -376,7 +376,7 @@ public function suggest_return() {
 	
 	$result = array();
 	$var = filter_var($_REQUEST['term'], FILTER_SANITIZE_SPECIAL_CHARS);
-	$this->db->query('SELECT * FROM items as i WHERE i.deleted=0 AND (');
+	$this->db->query('SELECT * FROM items as i WHERE i.deleted=0 AND ');
 	$this->db->order('ORDER BY i.item_id ASC');
 	if (!empty($sel = $this->db->search_suggestions($var, $this->recv_struct, $this->conv, array($this, 'conversion'), false))) {
 		foreach ($sel as $v) {
@@ -385,7 +385,7 @@ public function suggest_return() {
 	}
 	
 	
-	$this->db->query('SELECT * FROM item_kits as it WHERE (');
+	$this->db->query('SELECT * FROM item_kits as it WHERE ');
 	$this->db->order('ORDER BY it.item_kit_id ASC');
 	if (!empty($sel = $this->db->search_suggestions($var, $this->recv_struct, $this->recv_con, array($this, 'recv_conv'), false))) {
 		foreach ($sel as $v) {
@@ -432,7 +432,7 @@ public function suggest_sale(&$ipos) {
 	$barnum = strncmp($barcode, '22', 2) === 0 ? 5:(strncmp($barcode, '23', 2) === 0 ? 4:0);
 	if ($barnum !== 0) {
 		$var = ltrim(substr($barcode, 2, $barnum), '0');
-		$kg = floatval(substr($barcode, 2+$barnum, -3) + '.' + substr($barcode, -3));
+		$kg = strlen($barcode) == 13 ? (float)(substr($barcode, 2+$barnum, 8-$barnum) .'.'. substr($barcode, -3)) : 1.000;
 	}
 	
 	$label = is_numeric($var) ? array('label'=>'item_number='. $var) : array('label'=>'name='. $var);
@@ -860,7 +860,7 @@ private function search_data($var, $offset=0, $limit=100) {
 			LEFT JOIN suppliers as s ON i.supplier_id=s.person_id 
 			JOIN item_quantities as iq ON iq.item_id=i.item_id
 			WHERE i.deleted=0
-			AND (');
+			AND ');
 		$this->db->order('ORDER BY i.item_id ASC');
 		$result = $this->db->search_suggestions($var['label'], $this->table_struct, $this->sconv, array($this, 'sugg_conv'), false, $offset, $limit);
 	}

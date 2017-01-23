@@ -240,7 +240,7 @@ public function suggest_search() {
 	if (empty($_REQUEST['term'])) return;
 	
 	$var = filter_var($_REQUEST['term'], FILTER_SANITIZE_SPECIAL_CHARS);
-	$this->db->query('SELECT * FROM item_kits WHERE (');
+	$this->db->query('SELECT * FROM item_kits WHERE ');
 	$this->db->order('ORDER BY item_kit_id ASC');
 	if (!empty($result = $this->db->search_suggestions($var, $this->table_struct, $this->sconv, array($this, 'sugg_conv'))))
 		echo json_encode($result);
@@ -396,7 +396,7 @@ private function search_data($var, $offset=0, $limit=100) {
 	$this->db->order('ORDER BY it.item_kit_id ASC');
 	$result = $this->db->search($var, $this->conv, array($this, 'conversion'), $offset, $limit);
 	if ($result === -1) {
-		$this->db->query('SELECT distinct(item_kit_id) FROM item_kitsWHERE (');
+		$this->db->query('SELECT distinct(item_kit_id) FROM item_kits WHERE ');
 		$this->db->order('ORDER BY item_kit_id ASC');
 		$result = $this->db->search_suggestions($var['label'], $this->table_struct, $this->sconv, array($this, 'sugg_conv'), false, $offset, $limit);
 	}
